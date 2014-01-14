@@ -1,0 +1,16 @@
+[run]
+include = gauged/*.py
+branch = 1
+
+[report]
+exclude_lines =
+    # pragma: no cover
+    raise NotImplementedError
+    raise MemoryError
+    except ImportError
+    except OSError
+    if IS_PYPY
+    finally
+    Gauged\.map_free\(tmp\)
+    pass$
+

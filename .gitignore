@@ -1,0 +1,14 @@
+*.pyc
+*.pyo
+*.dSYM
+dist
+build
+gauged.egg-info
+.coverage
+test/test
+test/benchmark
+htmlcov
+.instrumental.cov
+*.gcno
+*.gcda
+*.gcov

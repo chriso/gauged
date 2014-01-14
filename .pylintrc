@@ -1,0 +1,29 @@
+[MESSAGES CONTROL]
+disable=C0111, R0923, R0801, W0142, W0212, I0011, bad-whitespace, fixme
+
+# C0111: Missing {class,method,function} docstring
+# R0923: Interface not implemented
+# R0801: Similar lines in %s files
+# W0142: Used * or ** magic
+# W0212: Access to a protected member %s of a client class
+# I0011: Locally disabling %s
+
+[BASIC]
+const-rgx=^[A-Z_][a-zA-Z0-9_]{1,29}$
+good-names=gt,lt,db,fn,_,i,n,x,y
+
+[REPORTS]
+include-ids=yes
+
+[FORMAT]
+max-line-length=100
+max-module-lines=1500
+
+[DESIGN]
+max-attributes=15
+min-public-methods=0
+max-public-methods=50
+max-locals=30
+max-branches=60
+max-statements=200
+max-args=20
