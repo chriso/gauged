@@ -1,10 +1,10 @@
 language: python
 python:
   - "2.7"
-  - "pypy"
 services:
   - "mysql"
   - "postgresql"
+install: "pip install mysql-python psycopg2"
 before_script:
   - cp test/travis.cfg test_drivers.cfg
   - mysql -e 'create database gauged;'

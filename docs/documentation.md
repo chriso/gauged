@@ -1,14 +1,26 @@
 ## Backends
 
-You can use either `MySQL`, `PostgreSQL` or `SQLite` as a backend. If no URL is specified than a SQLite-based in-memory database will be used
+MySQL requires either [mysql-python][mysql-python] or [pymysql][pymysql]
 
 ```python
-from gauged import Gauged
-
-# any one of:
 gauged = Gauged('mysql://root@localhost/gauged')
+```
+
+PostgreSQL requires [psycopg2][psycopg2]
+
+```python
 gauged = Gauged('postgresql://postgres@localhost/gauged')
+```
+
+SQLite uses the bindings compiled with your interpreter
+
+```python
 gauged = Gauged('sqlite:////tmp/gauged.db')
+```
+
+Omit the URL to use a SQLite-based in-memory database
+
+```python
 gauged = Gauged()
 ```
 
@@ -140,6 +152,9 @@ Configuration keys
 - **resolution** - see the [technical overview][technical-overview]. Defaults to `Gauged.SECOND`.
 
 
+[mysql-python]: http://mysql-python.sourceforge.net/
+[pymysql]: https://github.com/PyMySQL/PyMySQL
+[psycopg2]: http://initd.org/psycopg/
 [technical-overview]: https://github.com/chriso/gauged/blob/master/docs/technical-overview.md
 [time_series.py]: https://github.com/chriso/gauged/blob/master/gauged/results/time_series.py
 [statistics.py]: https://github.com/chriso/gauged/blob/master/gauged/results/statistics.py
