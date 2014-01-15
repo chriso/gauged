@@ -184,8 +184,6 @@ class Context(object):
                 cached_values[timestamp] = value
         values = []
         value_fn = self.value
-        if not context['include_partial']:
-            end -= (end - start) % interval
         while start < end:
             group_end = min(end, start + interval)
             if start in cached_values:
@@ -223,8 +221,6 @@ class Context(object):
                 cached_values[timestamp] = value
         values = []
         aggregate_fn = self.aggregate
-        if not context['include_partial']:
-            end -= (end - start) % interval
         while start < end:
             group_end = min(end, start + interval)
             if start in cached_values:

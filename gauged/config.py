@@ -29,7 +29,6 @@ DEFAULTS = {
         'prefix': None,
         'start': None,
         'end': None,
-        'include_partial': True,
         'interval': Time.DAY,
         'cache': True,
         'key': None,

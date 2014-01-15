@@ -80,19 +80,16 @@ class Gauged(object):
             percentile=percentile).aggregate()
 
     def value_series(self, key, start=None, end=None, interval=None,
-            namespace=None, cache=None, include_partial=None):
+            namespace=None, cache=None):
         '''Get a time series of gauge values'''
         return self.make_context(key=key, start=start, end=end,
-            interval=interval, namespace=namespace, cache=cache,
-            include_partial=include_partial).value_series()
+            interval=interval, namespace=namespace, cache=cache).value_series()
 
     def aggregate_series(self, key, aggregate, start=None, end=None,
-            interval=None, namespace=None, cache=True, include_partial=None,
-            percentile=None):
+            interval=None, namespace=None, cache=None, percentile=None):
         '''Get a time series of gauge aggregates'''
         return self.make_context(key=key, aggregate=aggregate, start=start,
             end=end, interval=interval, namespace=namespace, cache=cache,
-            include_partial=include_partial,
             percentile=percentile).aggregate_series()
 
     def keys(self, prefix=None, limit=None, offset=None, namespace=None):

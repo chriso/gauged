@@ -203,10 +203,6 @@ class TestGauged(TestCase):
         self.assertListEqual(series.values, [ 50, 250, 250, 350, 350, 70 ])
         series = gauged.value_series('foobar', interval=10000)
         self.assertListEqual(series.values, [ 50, 250, 250, 350, 350, 70 ])
-        series = gauged.value_series('foobar', interval=10000, end=65000, include_partial=False)
-        self.assertListEqual(series.values, [ 50, 250, 250, 350, 350 ])
-        series = gauged.value_series('foobar', interval=10000, end=50000, include_partial=False)
-        self.assertListEqual(series.values, [ 50, 250, 250, 350 ])
         series = gauged.value_series('foobar', start=0, end=80000, interval=10000, namespace=1)
         self.assertListEqual(series.values, [])
         with self.assertRaises(GaugedIntervalSizeError):
@@ -263,9 +259,6 @@ class TestGauged(TestCase):
         series = gauged.aggregate_series('foobar', Gauged.SUM,
             start=10000, end=40000, interval=10000)
         self.assertListEqual(series.values, [200, 150, 50])
-        series = gauged.aggregate_series('foobar', Gauged.SUM,
-            start=10000, end=36000, interval=10000, include_partial=False)
-        self.assertListEqual(series.values, [200, 150])
         series = gauged.aggregate_series('foobar', Gauged.SUM,
             start=10000, end=40000, interval=10000, namespace=1)
         self.assertListEqual(series.values, [])
