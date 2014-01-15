@@ -8,6 +8,8 @@ Features:
 - Efficient range queries and roll-ups of any size down to the configurable resolution of 1 second.
 - Use either `MySQL`, `PostgreSQL` or `SQLite` as a backend.
 
+![tests][travis]
+
 ## Installation
 
 The library can be installed with `easy_install` or `pip`
@@ -193,6 +195,7 @@ You can also run `make cbenchmark` to run C benchmarks.
 GPLv3
 
 
+[travis]: https://api.travis-ci.org/chriso/gauged.png?branch=master
 [technical-overview]: https://github.com/chriso/gauged/blob/master/docs/technical-overview.md
 [time_series.py]: https://github.com/chriso/gauged/blob/master/gauged/results/time_series.py
 [statistics.py]: https://github.com/chriso/gauged/blob/master/gauged/results/statistics.py
