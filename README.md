@@ -58,11 +58,11 @@ with gauged.writer as writer:
     writer.add('requests', 1, namespace=2)
 ```
 
-For more information, see the [technical overview](#).
+For more information, see the [technical overview][technical-overview].
 
 ## Reading data
 
-#### gauged.aggregate(key, aggregate, start=None, end=None, namespace=None, percentile=None)
+##### gauged.aggregate(key, aggregate, start=None, end=None, namespace=None, percentile=None)
 
 Fetch all values associated with the key during the specified date range (`[start, end)`), and then aggregate them using one of `Gauged.MIN`, `Gauged.MAX`, `Gauged.SUM`, `Gauged.COUNT`, `Gauged.MEAN`, `Gauged.MEDIAN`, `Gauged.STDDEV` or `Gauged.PERCENTILE`.
 
@@ -83,51 +83,52 @@ response_time = gauged.aggregate('response_time', Gauged.PERCENTILE,
     percentile=95, start=-Gauged.WEEK)
 ```
 
-#### gauged.aggregate_series(key, aggregate, interval=Gauged.DAY, **kwargs)
+##### gauged.aggregate_series(key, aggregate, interval=Gauged.DAY, **kwargs)
 
 The time series variant of `aggregate()`. This method takes the same kwargs as `aggregate()` and also accepts an `interval` in milliseconds.
 
-This method returns a `TimeSeries` instance. See [gauged/results/time_series.py](#) for the result API.
+This method returns a `TimeSeries` instance. See [gauged/results/time_series.py][time_series.py] for the result API.
 
 The method is approximately equal to
 
-```
+```python
 from gauged import TimeSeries
 points = []
-for timestamp in range(start, end, interval):
+for timestamp in xrange(start, end, interval):
     aggregate = gauged.aggregate(key, aggregate, start=timestamp, end=timestamp+interval)
     points.append(( timestamp, aggregate ))
 result = TimeSeries(points)
 ```
 
-#### gauged.value(key, timestamp=None, namespace=None)
+##### gauged.value(key, timestamp=None, namespace=None)
 
 Read the value of a key at the specified time (defaults to now).
 
-#### gauged.value_series(key, start=None, end=None, interval=Gauged.DAY, namespace=None)
+##### gauged.value_series(key, start=None, end=None, interval=Gauged.DAY, namespace=None)
 
 The time series variant of `value()` which reads the value of a key at each `interval` steps in the range `[start, end)`.
 
-#### gauged.keys(prefix=None, limit=None, offset=None, namespace=None)
+##### gauged.keys(prefix=None, limit=None, offset=None, namespace=None)
 
 Get a list of keys, optionally filtered by namespace or prefix.
 
-#### gauged.namespaces()
+##### gauged.namespaces()
 
 Get a list of namespaces.
 
-#### gauged.statistics(start=None, end=None, namespace=None)
+##### gauged.statistics(start=None, end=None, namespace=None)
 
-Get write statistics for the specified namespace during the specified date range. The statistics include number of data points and the number of bytes they consume. See [gauged/results/statistics.py](#) for the result API.
+Get write statistics for the specified namespace during the specified date range. The statistics include number of data points and the number of bytes they consume. See [gauged/results/statistics.py][statistics.py] for the result API.
 
 ## Plotting
 
-The data can be plotted easily with [matplotlib](http://matplotlib.org/)
+The data can be plotted easily with [matplotlib][matplotlib]
 
 ```python
 import pylab
 
-series = gauged.aggregate_series('requests', gauged.SUM, interval=gauged.DAY, start=-gauged.WEEK)
+series = gauged.aggregate_series('requests', gauged.SUM, interval=gauged.DAY,
+    start=-gauged.WEEK)
 pylab.plot(series.dates, series.values, label='Requests per day for the past week')
 pylab.show()
 ```
@@ -142,8 +143,8 @@ gauged = Gauged('mysql://root@localhost/gauged', **config)
 
 Configuration keys
 
-- **key_whitelist** - a list of allowed keys. Default is `None`, i.e. allow all keys
-- **flush_seconds** - whether to periodically flush data when writing, e.g. `10` would be flush every 10 seconds. Default is `0` (don't flush).
+- **key_whitelist** - a list of allowed keys. Default is `None`, i.e. allow all keys.
+- **flush_seconds** - whether to periodically flush data when writing, e.g. `10` would cause a flush every 10 seconds. Default is `0` (don't flush).
 - **namespace** - the default namespace to read and write to. Defaults to `0`.
 - **key_overflow** - what to do when the key size is greater than the backend allows, either `Gauged.ERROR` (default) or `Gauged.IGNORE`.
 - **gauge_nan** - what to do when attempting to write a `NaN` value, either `Gauged.ERROR` (default) or `Gauged.IGNORE`.
@@ -151,8 +152,8 @@ Configuration keys
 - **max_look_behind** - how far a `value(key, timestamp)` call will traverse when looking for the nearest measurement before `timestamp`. Default is `Gauged.WEEK`.
 - **min_cache_interval** - time series calls with intervals smaller than this will not be cached. Default is `Gauged.HOUR`.
 - **max_interval_steps** - throw an error if the number of interval steps is greater than this. Default is `31 * 24`.
-- **block_size** - see the [technical overview](#). Defaults to `Gauged.DAY`.
-- **resolution** - see the [technical overview](#). Defaults to `Gauged.SECOND`.
+- **block_size** - see the [technical overview][technical-overview]. Defaults to `Gauged.DAY`.
+- **resolution** - see the [technical overview][technical-overview]. Defaults to `Gauged.SECOND`.
 
 ## Tests
 
@@ -170,7 +171,7 @@ You can run coverage analysis with `make coverage` and run a lint tool `make lin
 
 Use `python benchmark [OPTIONS]`
 
-```
+```bash
 $ python benchmark.py --number 1000000 --days 365
 Writing to sqlite:// (block_size=86400000, resolution=1000)
 Spreading 1M measurements to key "foobar" over 365 days
@@ -190,3 +191,9 @@ You can also run `make cbenchmark` to run C benchmarks.
 ## License
 
 GPLv3
+
+
+[technical-overview]: https://github.com/chriso/gauged/blob/master/docs/technical-overview.md
+[time_series.py]: https://github.com/chriso/gauged/blob/master/gauged/results/time_series.py
+[statistics.py]: https://github.com/chriso/gauged/blob/master/gauged/results/statistics.py
+[matplotlib]: http://matplotlib.org/

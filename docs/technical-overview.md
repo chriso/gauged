@@ -33,7 +33,7 @@ key_1_data = {
 }
 ```
 
-Each measurement is stored as an array of C floats (see *include/array.h*).
+Each measurement is stored as an array of C floats (see [include/array.h](https://github.com/chriso/gauged/blob/master/include/array.h)).
 
 The next step is to break our data down into blocks determined by the `block_size` configuration key which defaults to `86400000` (1 day).
 
@@ -55,7 +55,7 @@ Using the defaults of `block_size = 1 day, resolution = 1 second` you can intuit
 16072 * 86400000 + 3600 * 1000 = 1388624400000
 ```
 
-The next step is to efficiently encode our data. For this we use a `SparseMap` (see `include/map.h`) which encodes positions and measurement arrays into a single buffer to improve cache locality.
+The next step is to efficiently encode our data. For this we use a `SparseMap` (see [include/map.h](https://github.com/chriso/gauged/blob/master/include/map.h)) which encodes positions and measurement arrays into a single buffer to improve cache locality.
 
 We encode the array's position and length into a 4 or 8 byte header using one of the following formats
 
