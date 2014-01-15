@@ -9,7 +9,7 @@ clean:
 		 dist build gauged.egg-info .coverage htmlcov \
 		 test/test test/benchmark test/*.dSYM \
 		 htmlcov .instrumental.cov *.pyc \
-		 *.gcda *.gcno *.gcov
+		 *.gcda *.gcno *.gcov MANIFEST
 
 coverage: build
 	@command -v coverage >/dev/null || \

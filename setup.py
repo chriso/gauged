@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import re
-from setuptools import setup, find_packages, Extension
+from distutils.core import setup, Extension
 
 cflags = [ '-O3', '-std=c99', '-pedantic', '-Wall', '-Wextra', '-pthread' ]
 
@@ -22,5 +22,6 @@ setup(
     license = 'GPL',
     url = 'https://github.com/chriso/gauged',
     ext_modules = [gauged],
-    packages = find_packages()
+    packages = ['gauged', 'gauged.errors', 'gauged.results',
+        'gauged.drivers','gauged.structures']
 )
