@@ -212,22 +212,19 @@ class Writer(object):
             self.driver.set_writer_position(config.writer_name, timestamp)
 
     def translate_keys(self):
-        items = []
-        for namespace, key, _ in self.pending_blocks():
-            items.append(( namespace, key ))
+        keys = list(self.pending_keys())
+        if not len(keys):
+            return {}
         key_cache = self.key_cache
-        key_list = list(set(( item for item in items if item not in key_cache )))
-        if len(key_list):
-            self.driver.insert_keys(key_list)
-            keys = self.driver.lookup_ids(key_list)
-        else:
-            keys = {}
-        for item in items:
-            if item in key_cache:
-                keys[item] = key_cache[item]
-        for namespace_key, id_ in keys.iteritems():
-            key_cache[namespace_key] = id_
-        return keys
+        to_translate = [ key for key in keys if key not in key_cache ]
+        self.driver.insert_keys(to_translate)
+        ids = self.driver.lookup_ids(to_translate)
+        for key in keys:
+            if key in key_cache:
+                ids[key] = key_cache[key]
+        for key, id_ in ids.iteritems():
+            key_cache[key] = id_
+        return ids
 
     def flush_blocks(self):
         writer = self.writer
@@ -246,6 +243,16 @@ class Writer(object):
     def flush_timer_tick(self):
         self.flush_now = True
         self.start_flush_timer()
+
+    def pending_keys(self):
+        pending = self.writer.contents.pending.contents
+        head = pending.head
+        while True:
+            if not head:
+                break
+            node = head.contents
+            yield node.namespace, node.key
+            head = node.next
 
     def pending_blocks(self):
         block = SparseMap()
