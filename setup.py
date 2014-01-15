@@ -18,7 +18,7 @@ setup(
     version = version,
     author = 'Chris O\'Hara',
     author_email = 'cohara87@gmail.com',
-    description = 'Read and write gauge data',
+    description = 'A fast, append-only storage layer for numeric data that changes over time',
     license = 'GPL',
     url = 'https://github.com/chriso/gauged',
     ext_modules = [gauged],
