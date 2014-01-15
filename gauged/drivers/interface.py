@@ -41,7 +41,7 @@ class DriverInterface(object):
     def block_offset_bounds(self, namespace):
         raise NotImplementedError
 
-    def set_metadata(self, key, value):
+    def set_metadata(self, metadata, replace=True):
         raise NotImplementedError
 
     def get_metadata(self, key):

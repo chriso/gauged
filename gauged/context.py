@@ -105,7 +105,7 @@ class Context(object):
             # TODO: Certain aggregates could call aggregate_series()
             # to utilise the cache and then aggregate the results
             if aggregate == Aggregate.SUM:
-                for block in self.block_iterator(start, end, key):
+                for block in self.block_iterator(key, start, end):
                     if result is None:
                         result = 0
                     result += block.sum()
@@ -113,26 +113,26 @@ class Context(object):
                     block = None
             elif aggregate == Aggregate.COUNT:
                 result = 0
-                for block in self.block_iterator(start, end, key):
+                for block in self.block_iterator(key, start, end):
                     result += block.count()
                     block.free()
                     block = None
             elif aggregate == Aggregate.MIN:
-                for block in self.block_iterator(start, end, key):
+                for block in self.block_iterator(key, start, end):
                     comparison = block.min()
                     if result is None or result > comparison:
                         result = comparison
                     block.free()
                     block = None
             elif aggregate == Aggregate.MAX:
-                for block in self.block_iterator(start, end, key):
+                for block in self.block_iterator(key, start, end):
                     comparison = block.max()
                     if result is None or result < comparison:
                         result = comparison
                     block.free()
                     block = None
             elif aggregate == Aggregate.FIRST:
-                for block in self.block_iterator(start, end, key):
+                for block in self.block_iterator(key, start, end):
                     first = block.first()
                     block.free()
                     block = None
@@ -141,7 +141,7 @@ class Context(object):
                         break
             elif aggregate == Aggregate.MEAN:
                 count = 0
-                for block in self.block_iterator(start, end, key):
+                for block in self.block_iterator(key, start, end):
                     block_count = block.count()
                     if block_count:
                         count += block_count
@@ -174,33 +174,30 @@ class Context(object):
         end = context['end']
         namespace = self.namespace
         interval = self.interval
-        cached_values = {}
         cache = self.cache
         if cache:
             cache_key = self.cache_key
             driver = self.driver
-            cached = driver.get_cache(namespace, cache_key, interval, start, end)
-            for timestamp, value in cached:
-                cached_values[timestamp] = value
+            cached = dict(driver.get_cache(namespace, cache_key, interval, start, end))
+        else:
+            cached = {}
         values = []
         value_fn = self.value
         while start < end:
             group_end = min(end, start + interval)
-            if start in cached_values:
-                value = cached_values[start]
-            else:
-                value = value_fn(start)
+            value = cached[start] if start in cached else value_fn(start)
             values.append(( start, group_end, value ))
             start += interval
         if cache:
             to_cache = []
             cache_until_timestamp = self.cache_until * self.config.block_size
             for start, end, value in values:
-                if cache_until_timestamp >= end and start not in cached_values:
+                if cache_until_timestamp >= end and start not in cached:
                     to_cache.append(( start, value ))
             if len(to_cache):
                 driver.add_cache(namespace, cache_key, interval, to_cache)
-        return TimeSeries(( (start, value) for start, _, value in values if value ))
+        return TimeSeries(( (start, value) for start, _, value in values \
+            if value is not None ))
 
     def aggregate_series(self):
         key = self.translated_key
@@ -211,35 +208,31 @@ class Context(object):
         end = context['end']
         namespace = self.namespace
         interval = self.interval
-        cached_values = {}
         cache = self.cache
         if cache:
             cache_key = self.cache_key
             driver = self.driver
-            cached = driver.get_cache(namespace, cache_key, interval, start, end)
-            for timestamp, value in cached:
-                cached_values[timestamp] = value
+            cached = dict(driver.get_cache(namespace, cache_key, interval, start, end))
+        else:
+            cached = {}
         values = []
         aggregate_fn = self.aggregate
         while start < end:
             group_end = min(end, start + interval)
-            if start in cached_values:
-                result = cached_values[start]
-            else:
-                result = aggregate_fn(start, group_end)
+            result = cached[start] if start in cached else aggregate_fn(start, group_end)
             values.append(( start, group_end, result ))
             start += interval
         if cache:
             to_cache = []
             cache_until_timestamp = self.cache_until * self.config.block_size
             for start, end, result in values:
-                if cache_until_timestamp >= end and start not in cached_values:
+                if cache_until_timestamp >= end and start not in cached:
                     to_cache.append(( start, result ))
             if len(to_cache):
                 driver.add_cache(namespace, cache_key, interval, to_cache)
         return TimeSeries(( (start, value) for start, _, value in values ))
 
-    def block_iterator(self, start, end, key, yield_if_empty=False):
+    def block_iterator(self, key, start, end, yield_if_empty=False):
         config = self.config
         block_size, resolution = config.block_size, config.resolution
         start_block, start_array = divmod(start, block_size)
@@ -276,7 +269,7 @@ class Context(object):
         context = self.context
         start = context['start'] if start is None else start
         end = context['end'] if end is None else end
-        blocks = self.block_iterator(start, end, key, yield_if_empty=True)
+        blocks = self.block_iterator(key, start, end, yield_if_empty=True)
         block_arrays = self.config.block_arrays
         offset = 0
         result = SparseMap()
@@ -341,16 +334,14 @@ class Context(object):
     @property
     def translated_key(self):
         namespace_key = (self.namespace, to_bytes(self.context['key']))
-        ids = self.driver.lookup_ids([ namespace_key ])
+        ids = self.driver.lookup_ids((namespace_key,))
         return ids.get(namespace_key)
 
     @property
     def cache(self):
         if not self.context['cache']:
             return False
-        if self.context['interval'] < self.config.min_cache_interval:
-            return False
-        return True
+        return self.context['interval'] >= self.config.min_cache_interval
 
     @property
     def cache_until(self):

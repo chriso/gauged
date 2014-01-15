@@ -17,5 +17,5 @@ class Aggregate(object):
     MEDIAN = 'median'
     COUNT = 'count'
 
-    ALL = set([ FIRST, LAST, SUM, MIN, MAX, MEAN,
-        STDDEV, PERCENTILE, MEDIAN, COUNT ])
+    ALL = set(( FIRST, LAST, SUM, MIN, MAX, MEAN,
+        STDDEV, PERCENTILE, MEDIAN, COUNT ))

@@ -22,20 +22,20 @@ class PostgreSQLDriver(DriverInterface):
 
     def keys(self, namespace, prefix=None, limit=None, offset=None):
         '''Get keys from a namespace'''
-        args = [ namespace ]
+        params = [ namespace ]
         query = '''SELECT key FROM gauged_keys
             WHERE namespace = %s'''
         if prefix is not None:
             query += ' AND key LIKE %s'
-            args.append(prefix + '%')
+            params.append(prefix + '%')
         if limit is not None:
             query += ' LIMIT %s'
-            args.append(limit)
+            params.append(limit)
         if offset is not None:
             query += ' OFFSET %s'
-            args.append(offset)
+            params.append(offset)
         cursor = self.cursor
-        cursor.execute(query, args)
+        cursor.execute(query, params)
         return [ key for key, in cursor ]
 
     def lookup_ids(self, keys):
@@ -50,12 +50,10 @@ class PostgreSQLDriver(DriverInterface):
         cursor = self.cursor
         execute = cursor.execute
         while start < keys_len:
-            namespace_keys = keys[start:start+bulk_insert]
-            args = []
-            for namespace, key in namespace_keys:
-                args.extend([ namespace, key ])
-            id_query = query + (check + ' OR ') * (len(namespace_keys) - 1) + check
-            execute(id_query, args)
+            rows = keys[start:start+bulk_insert]
+            params = [ param for params in rows for param in params ]
+            id_query = query + (check + ' OR ') * (len(rows) - 1) + check
+            execute(id_query, params)
             for namespace, key, id_ in cursor:
                 ids[( namespace, key )] = id_
             start += bulk_insert
@@ -64,10 +62,10 @@ class PostgreSQLDriver(DriverInterface):
     def get_block(self, namespace, offset, key):
         '''Get the block identified by namespace, offset, key and
         value'''
-        lookup = ( namespace, offset, key )
         cursor = self.cursor
         cursor.execute('''SELECT data, flags FROM gauged_data
-            WHERE namespace = %s AND "offset" = %s AND key = %s''', lookup)
+            WHERE namespace = %s AND "offset" = %s AND key = %s''',
+            ( namespace, offset, key ))
         row = cursor.fetchone()
         return ( None, None ) if row is None else row
 
@@ -79,12 +77,10 @@ class PostgreSQLDriver(DriverInterface):
         query = 'INSERT INTO gauged_keys (namespace, key) VALUES '
         execute = self.cursor.execute
         while start < keys_len:
-            namespace_keys = keys[start:start+bulk_insert]
-            args = []
-            for namespace, key in namespace_keys:
-                args.extend([ namespace, key ])
-            insert = '(%s,%s),' * (len(namespace_keys) - 1) + '(%s,%s)'
-            execute(query + insert, args)
+            rows = keys[start:start+bulk_insert]
+            params = [ param for params in rows for param in params ]
+            insert = '(%s,%s),' * (len(rows) - 1) + '(%s,%s)'
+            execute(query + insert, params)
             start += bulk_insert
 
     def replace_blocks(self, blocks):
@@ -103,11 +99,11 @@ class PostgreSQLDriver(DriverInterface):
             (namespace, "offset", key, data, flags) VALUES '''
         binary = self.psycopg2.Binary
         while start < blocks_len:
-            values = blocks[start:start+bulk_insert]
+            rows = blocks[start:start+bulk_insert]
             params = []
-            for namespace, offset, key, data, flags in values:
-                params.extend([ namespace, offset, key, binary(data), flags ])
-            insert = (row + ',') * (len(values) - 1) + row
+            for namespace, offset, key, data, flags in rows:
+                params.extend(( namespace, offset, key, binary(data), flags ))
+            insert = (row + ',') * (len(rows) - 1) + row
             execute(query + insert, params)
             start += bulk_insert
 
@@ -139,18 +135,13 @@ class PostgreSQLDriver(DriverInterface):
         execute = self.cursor.execute
         if replace:
             query = 'DELETE FROM gauged_metadata WHERE key IN (%s'
-            args = []
-            for key in metadata.iterkeys():
-                args.append(key)
             query += ',%s' * (len(metadata) - 1) + ')'
-            execute(query, args)
-        args = []
-        for pair in metadata.iteritems():
-            args.extend(pair)
+            execute(query, metadata.keys())
+        params = [ param for params in metadata.iteritems() for param in params ]
         query = 'INSERT INTO gauged_metadata VALUES (%s,%s)'
         query += ',(%s,%s)' * (len(metadata) - 1)
-        execute(query, args)
-        self.commit()
+        execute(query, params)
+        self.db.commit()
 
     def get_metadata(self, key):
         cursor = self.cursor
@@ -161,7 +152,7 @@ class PostgreSQLDriver(DriverInterface):
     def all_metadata(self):
         cursor = self.cursor
         cursor.execute('SELECT * FROM gauged_metadata')
-        return dict(( row for row in self.cursor ))
+        return dict(( row for row in cursor ))
 
     def set_writer_position(self, name, timestamp):
         '''Insert a timestamp to keep track of the current writer position'''
@@ -186,34 +177,34 @@ class PostgreSQLDriver(DriverInterface):
 
     def remove_namespace(self, namespace):
         '''Remove all data associated with the current namespace'''
-        args = (namespace, )
+        params = (namespace, )
         execute = self.cursor.execute
-        execute('DELETE FROM gauged_data WHERE namespace = %s', args)
-        execute('DELETE FROM gauged_statistics WHERE namespace = %s', args)
-        execute('DELETE FROM gauged_keys WHERE namespace = %s', args)
+        execute('DELETE FROM gauged_data WHERE namespace = %s', params)
+        execute('DELETE FROM gauged_statistics WHERE namespace = %s', params)
+        execute('DELETE FROM gauged_keys WHERE namespace = %s', params)
         self.remove_cache(namespace)
 
     def clear_from(self, offset, timestamp):
-        args = (offset, )
+        params = (offset, )
         execute = self.cursor.execute
-        execute('''DELETE FROM gauged_data WHERE "offset" >= %s''', args)
-        execute('''DELETE FROM gauged_statistics WHERE "offset" >= %s ''', args)
-        execute('''DELETE FROM gauged_cache WHERE start + length >= %s''',
+        execute('DELETE FROM gauged_data WHERE "offset" >= %s', params)
+        execute('DELETE FROM gauged_statistics WHERE "offset" >= %s', params)
+        execute('DELETE FROM gauged_cache WHERE start + length >= %s',
             (timestamp,))
         execute('''UPDATE gauged_writer_history SET timestamp = %s
             WHERE timestamp > %s''', (timestamp, timestamp))
 
     def get_cache(self, namespace, query_hash, length, start, end):
-        '''Get a cached count for the specified date range and query'''
+        '''Get a cached value for the specified date range and query'''
         query_hash = self.psycopg2.Binary(query_hash)
-        row = (namespace, query_hash, length, start, end)
         cursor = self.cursor
         cursor.execute('''SELECT start, value FROM gauged_cache WHERE namespace = %s
-            AND "hash" = %s AND length = %s AND start BETWEEN %s AND %s''', row)
+            AND "hash" = %s AND length = %s AND start BETWEEN %s AND %s''',
+            (namespace, query_hash, length, start, end))
         return cursor.fetchall()
 
     def add_cache(self, namespace, query_hash, length, cache):
-        '''Add cached counts for the specified date range and query'''
+        '''Add cached values for the specified date range and query'''
         start = 0
         bulk_insert = self.bulk_insert
         cache_len = len(cache)
@@ -223,17 +214,17 @@ class PostgreSQLDriver(DriverInterface):
         execute = self.cursor.execute
         query_hash = self.psycopg2.Binary(query_hash)
         while start < cache_len:
-            values = cache[start:start+bulk_insert]
+            rows = cache[start:start+bulk_insert]
             params = []
-            for start_, count in values:
-                params.extend([ namespace, query_hash, length, start_, count ])
-            insert = (row + ',') * (len(values) - 1) + row
+            for timestamp, value in rows:
+                params.extend(( namespace, query_hash, length, timestamp, value ))
+            insert = (row + ',') * (len(rows) - 1) + row
             execute(query + insert, params)
             start += bulk_insert
         self.db.commit()
 
     def remove_cache(self, namespace):
-        '''Remove all cached counts for the specified namespace'''
+        '''Remove all cached values for the specified namespace'''
         self.cursor.execute('DELETE FROM gauged_cache WHERE namespace = %s', (namespace,))
 
     def commit(self):
@@ -294,7 +285,7 @@ class PostgreSQLDriver(DriverInterface):
                 AS ON INSERT TO gauged_metadata WHERE EXISTS (
                 SELECT 1 FROM gauged_metadata WHERE key = NEW.key)
                 DO INSTEAD NOTHING''')
-        self.commit()
+        self.db.commit()
 
     def clear_schema(self):
         '''Clear all gauged data'''

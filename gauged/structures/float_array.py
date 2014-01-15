@@ -62,7 +62,7 @@ class FloatArray(object):
 
     def values(self):
         '''Get all floats in the array as a list'''
-        return [ member for member in self ]
+        return list(self)
 
     def append(self, member):
         '''Append a float to the array'''
@@ -78,9 +78,7 @@ class FloatArray(object):
         contents = self.ptr.contents
         ptr = addressof(contents.buffer.contents) + byte_offset
         length = contents.length * 4 - byte_offset
-        if length == 0:
-            return None
-        return buffer((c_char * length).from_address(ptr).raw)
+        return buffer((c_char * length).from_address(ptr).raw) if length else None
 
     def clear(self):
         '''Clear the array'''
@@ -88,23 +86,17 @@ class FloatArray(object):
 
     def __getitem__(self, offset):
         '''Get the member at the specified offset'''
-        if offset >= self.ptr.contents.length:
+        contents = self.ptr.contents
+        if offset >= contents.length:
             raise IndexError
-        return self.ptr.contents.buffer[offset]
+        return contents.buffer[offset]
 
     def __len__(self):
         '''Get the number of floats in the array'''
         return self.ptr.contents.length
 
     def __repr__(self):
-        string = '['
-        values = self.values()
-        if len(values):
-            string += '%s' % values[0]
-        for value in values[1:]:
-            string += ', %s' % value
-        string += ']'
-        return string
+        return '[' + ', '.join(( str(value) for value in self )) + ']'
 
     def __enter__(self):
         return self

@@ -11,6 +11,5 @@ exclude_lines =
     except OSError
     if IS_PYPY
     finally
-    Gauged\.map_free\(tmp\)
     pass$
 

@@ -48,7 +48,7 @@ class Writer(object):
     def add(self, data, value=None, timestamp=None, namespace=None, debug=False):
         '''Queue a gauge or gauges to be written'''
         if value is not None:
-            return self.add([ (data, value) ], timestamp=timestamp,
+            return self.add(((data, value),), timestamp=timestamp,
                 namespace=namespace, debug=debug)
         writer = self.writer
         if writer is None:
@@ -72,6 +72,8 @@ class Writer(object):
                 this_array = self.current_array
             else:
                 return
+        if type(data) == UnicodeType:
+            data = data.encode('utf8')
         if debug:
             return self.debug(timestamp, namespace, data)
         if this_block > self.current_block:
@@ -83,13 +85,10 @@ class Writer(object):
                 raise MemoryError
             self.current_array = this_array
         data_points = 0
-        emit = Gauged.writer_emit
         namespace_statistics = self.statistics[namespace]
         whitelist = config.key_whitelist
         skip_long_keys = config.key_overflow == Writer.IGNORE
         skip_gauge_nan = config.gauge_nan == Writer.IGNORE
-        if type(data) == UnicodeType:
-            data = data.encode('utf8')
         if type(data) == StringType and skip_gauge_nan \
                 and skip_long_keys and whitelist is None: # fast path
             data_points = c_uint32(0)
@@ -102,6 +101,7 @@ class Writer(object):
                 data = data.iteritems()
             elif type(data) == StringType:
                 data = self.parse_query(data)
+            emit = Gauged.writer_emit
             for key, value in data:
                 key = to_bytes(key)
                 if whitelist is not None and key not in whitelist:
@@ -164,9 +164,7 @@ class Writer(object):
         '''Get a timestamp representing the position just after the last
         written gauge'''
         position = self.driver.get_writer_position(self.config.writer_name)
-        if not position:
-            return 0
-        return position + self.config.resolution
+        return position + self.config.resolution if position else 0
 
     def clear_from(self, timestamp):
         '''Clear all data from `timestamp` onwards. Note that the timestamp

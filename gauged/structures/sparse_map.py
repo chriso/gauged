@@ -78,7 +78,7 @@ class SparseMap(object):
         if tmp is None:
             raise MemoryError
         if not Gauged.map_concat(tmp, self.ptr, start, end, 0):
-            Gauged.map_free(tmp)
+            Gauged.map_free(tmp) # pragma: no cover
             raise MemoryError
         return SparseMap(tmp)
 
@@ -166,13 +166,14 @@ class SparseMap(object):
         position_ = byref(position)
         arraylength_ = byref(arraylength)
         arrayptr_ = byref(arrayptr)
+        advance = Gauged.map_advance
         while seen_length < length:
-            current_buf = Gauged.map_advance(current_buf, header_, position_,
+            current_buf = advance(current_buf, header_, position_,
                 arraylength_, arrayptr_)
             seen_length += header.value + arraylength.value
             address = addressof(arrayptr.contents)
             arr = (c_float * arraylength.value).from_address(address)
-            yield position.value, [ arr[i] for i in xrange(arraylength.value) ]
+            yield position.value, list(arr)
 
     def __repr__(self):
         rows = []
