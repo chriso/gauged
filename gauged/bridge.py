@@ -15,7 +15,8 @@ class SharedLibrary(object):
         self.prefix = prefix
         path = os.path.dirname(os.path.realpath(__file__ + '/../'))
         version = sys.version.split(' ')[0][0:3]
-        lib = glob.glob('%s/build/lib*-%s/%s' % (path, version, name))
+        basename = name.split('.')[0]
+        lib = glob.glob('%s/build/lib*-%s/%s*.so' % (path, version, basename))
         if not len(lib): # pragma: no cover
             lib = path + '/' + name
         else:
