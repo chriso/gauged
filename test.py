@@ -70,7 +70,9 @@ def run_tests():
 
     # Run the tests
     while True:
-        test_runner.run(suite)
+        result = test_runner.run(suite)
+        if result.errors or result.failures:
+            exit(1)
         if not run_forever:
             break
         gc.collect()
