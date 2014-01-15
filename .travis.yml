@@ -2,4 +2,11 @@ language: python
 python:
   - "2.7"
   - "pypy"
-script: make check-quick
+services:
+  - "mysql"
+  - "postgresql"
+before_script:
+  - cp test/travis.cfg test_drivers.cfg
+  - mysql -e 'create database gauged;'
+  - psql -c 'create database gauged;' -U postgres
+script: make check
