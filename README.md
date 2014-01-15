@@ -1,6 +1,6 @@
 ## Gauged
 
-![tests][travis]
+[![tests][travis]][travis-builds]
 
 A fast, append-only storage layer for gauges, counters, timers and other numeric data types that change over time.
 
@@ -104,6 +104,7 @@ GPLv3
 
 
 [travis]: https://api.travis-ci.org/chriso/gauged.png?branch=master
+[travis-builds]: https://travis-ci.org/chriso/gauged
 [technical-overview]: https://github.com/chriso/gauged/blob/master/docs/technical-overview.md
 [documentation]: https://github.com/chriso/gauged/blob/master/docs/documentation.md
 [matplotlib]: http://matplotlib.org/
