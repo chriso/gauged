@@ -1,0 +1,7 @@
+---[ HEAD ]
+
+* Remove setuptools dependency
+
+---[ 0.1.0 ]
+
+* Initial release
