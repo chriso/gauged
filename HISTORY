@@ -1,6 +1,7 @@
 ---[ HEAD ]
 
 * Remove setuptools dependency
+* Fixed the driver URL querystring parser
 
 ---[ 0.1.0 ]
 

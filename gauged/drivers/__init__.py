@@ -28,10 +28,7 @@ def parse_dsn(dsn_string):
         host, port = host.split(':')
         port = int(port)
     database = dsn.path.split('?')[0][1:]
-    if '?' in dsn.path: # pragma: no cover
-        query = dsn.path.split('?')[1]
-    else:
-        query = dsn.query
+    query = dsn.path.split('?')[1] if '?' in dsn.path else dsn.query
     kwargs = dict(parse_qsl(query, True))
     if scheme == 'sqlite':
         return SQLiteDriver, [ dsn.path ], {}
