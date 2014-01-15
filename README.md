@@ -92,7 +92,7 @@ This method returns a `TimeSeries` instance. See [gauged/results/time_series.py]
 The method is approximately equal to
 
 ```python
-from gauged import TimeSeries
+from gauged.results import TimeSeries
 points = []
 for timestamp in xrange(start, end, interval):
     aggregate = gauged.aggregate(key, aggregate, start=timestamp, end=timestamp+interval)
