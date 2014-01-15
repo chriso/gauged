@@ -9,3 +9,4 @@ include test.py
 include .coveragerc
 include .pylintrc
 include test_drivers.cfg
+include docs/*

@@ -1,6 +1,6 @@
 Here's some example measurements to the `foo` gauge
 
-```
+```python
 with gauged.writer as writer:
 	writer.add('foo', 100, timestamp=1388534400000)
 	writer.add('foo', 200, timestamp=1388534400100)
@@ -12,7 +12,7 @@ The first step in the write process is key translation. The key `foo` is mapped 
 
 Our data for `foo` looks like this
 
-```
+```python
 key_1_data = [
     (1388534400000, 100),
     (1388534400100, 200),
@@ -25,7 +25,7 @@ The `resolution` configuration key specifies how fine-grained our storage is and
 
 We round down each timestamp so that it is a multiple of `resolution` and then we group together measurements to the same key at the same time
 
-```
+```python
 key_1_data = {
     1388534400000: (100, 200),
     1388534401000: (300),
@@ -39,7 +39,7 @@ The next step is to break our data down into blocks determined by the `block_siz
 
 We divide each timestamp by the `block_size` and extract a block_offset. Our data now looks like this
 
-```
+```python
 key_1_offset_16071_data = {
     0: (100, 200),
     1: (300)
@@ -51,7 +51,7 @@ key_1_offset_16072_data = {
 
 Using the defaults of `block_size = 1 day, resolution = 1 second` you can intuitively see that the offset represents the number of days (since 1970/1/1) while the positions (the dict keys) represent the number of seconds into that day. You can reconstruct the timestamp by taking `(offset * block_size) + (position * resolution)`
 
-```
+```python
 16072 * 86400000 + 3600 * 1000 = 1388624400000
 ```
 
@@ -73,7 +73,7 @@ We then pack each array and header contiguously
 
 Our data now looks like this
 
-```
+```python
 key_1_offset_16071_data = buffer(...)
 key_1_offset_16072_data = buffer(...)
 ```
