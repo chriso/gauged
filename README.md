@@ -1,14 +1,15 @@
 ## Gauged
 
+![tests][travis]
+
 A fast, append-only storage layer for gauges, counters, timers and other numeric data types that change over time.
 
 Features:
 
 - Cache-aware data structures and algorithms for speed and memory-efficiency.
+- Comfortably handle 100+ million data points on a single node.
 - Efficient range queries and roll-ups of any size down to the configurable resolution of 1 second.
 - Use either `MySQL`, `PostgreSQL` or `SQLite` as a backend.
-
-![tests][travis]
 
 ## Installation
 
@@ -104,11 +105,15 @@ result = TimeSeries(points)
 
 ##### gauged.value(key, timestamp=None, namespace=None)
 
-Read the value of a key at the specified time (defaults to now).
+Read the value of a key at the specified time (defaults to now). Unlike `aggregate()` which looks at all values between the two timestamps, this method starts at the specified timestamp (defaults to now if omitted) and then goes back in time until a measurement for the specified key is found. The config key `max_look_behind` determines how far the method will look before returning `None`.
+
+```python
+facebook_likes = gauged.value('facebook_likes', timestamp=datetime(2014, 1, 23))
+```
 
 ##### gauged.value_series(key, start=None, end=None, interval=Gauged.DAY, namespace=None)
 
-The time series variant of `value()` which reads the value of a key at each `interval` steps in the range `[start, end)`.
+The time series variant of `value()` which reads the `value()` of a key at each `interval` steps in the range `[start, end)`.
 
 ##### gauged.keys(prefix=None, limit=None, offset=None, namespace=None)
 
