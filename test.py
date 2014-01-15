@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+'''
+Gauged - https://github.com/chriso/gauged
+Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
+'''
 
 import gauged, unittest, sys, gc
 from ConfigParser import ConfigParser
