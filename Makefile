@@ -55,6 +55,9 @@ lint:
 			--output-format=colorized \
 			--report=n gauged
 
+publish:
+	@python setup.py sdist upload
+
 test: check
 
-.PHONY: build clean install lint ctest_deps
+.PHONY: build clean install lint ctest_deps publish
