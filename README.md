@@ -81,10 +81,10 @@ You can run coverage analysis with `make coverage` and run a lint tool `make lin
 
 ## Benchmarks
 
-Use `python benchmark [OPTIONS]`
+Use `python benchmark [OPTIONS]` to run benchmarks using an in-memory database. Your mileage will vary once you add I/O
 
 ```bash
-$ python benchmark.py --number 1000000 --days 365
+$ make build && python benchmark.py --number 1000000 --days 365
 Writing to sqlite:// (block_size=86400000, resolution=1000)
 Spreading 1M measurements to key "foobar" over 365 days
 Wrote 1M measurements in 4.912 seconds (203.6K/s) (rss: 12.4MB)

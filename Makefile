@@ -39,7 +39,7 @@ ctest: ctest_deps
 ccoverage: ctest
 	@(gcov lib/*.c && cat *.gcov) | less
 
-benchmark:
+benchmark: build
 	@python benchmark.py
 
 cbenchmark:
