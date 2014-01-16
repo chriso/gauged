@@ -6,8 +6,6 @@ Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 
 class Aggregate(object):
 
-    FIRST = 'first'
-    LAST = 'last'
     SUM = 'sum'
     MIN = 'min'
     MAX = 'max'
@@ -17,5 +15,4 @@ class Aggregate(object):
     MEDIAN = 'median'
     COUNT = 'count'
 
-    ALL = set(( FIRST, LAST, SUM, MIN, MAX, MEAN,
-        STDDEV, PERCENTILE, MEDIAN, COUNT ))
+    ALL = set(( SUM, MIN, MAX, MEAN, STDDEV, PERCENTILE, MEDIAN, COUNT ))

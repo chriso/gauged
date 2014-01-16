@@ -132,14 +132,6 @@ class Context(object):
                         result = comparison
                     block.free()
                     block = None
-            elif aggregate == Aggregate.FIRST:
-                for block in self.block_iterator(key, start, end):
-                    first = block.first()
-                    block.free()
-                    block = None
-                    if first is not None and first == first: # => !NaN
-                        result = first
-                        break
             elif aggregate == Aggregate.MEAN:
                 count = 0
                 for block in self.block_iterator(key, start, end):
@@ -170,13 +162,13 @@ class Context(object):
                         block.free()
                         block = None
                     result = sqrt(sum_of_squares / float(count))
-            else: # last, percentile & median
+            else: # percentile & median
                 block = self.query(key, start, end)
                 if block is not None:
                     if aggregate == Aggregate.PERCENTILE:
                         result = block.percentile(context['percentile'])
                     else:
-                        result = getattr(block, aggregate)()
+                        result = block.median()
         finally:
             if block is not None:
                 block.free()

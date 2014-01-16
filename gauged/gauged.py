@@ -34,11 +34,9 @@ class Gauged(object):
     REWRITE = Writer.REWRITE
 
     AGGREGATES = Aggregate.ALL
-    FIRST = Aggregate.FIRST
-    LAST = Aggregate.LAST
-    SUM = Aggregate.SUM
     MIN = Aggregate.MIN
     MAX = Aggregate.MAX
+    SUM = Aggregate.SUM
     MEAN = Aggregate.MEAN
     STDDEV = Aggregate.STDDEV
     PERCENTILE = Aggregate.PERCENTILE

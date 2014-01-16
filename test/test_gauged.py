@@ -172,10 +172,6 @@ class TestGauged(TestCase):
         self.assertEqual(result, 150)
         result = gauged.aggregate('foobar', Gauged.PERCENTILE, percentile=90)
         self.assertEqual(result, 310)
-        result = gauged.aggregate('foobar', Gauged.FIRST)
-        self.assertEqual(result, 50)
-        result = gauged.aggregate('foobar', Gauged.LAST)
-        self.assertEqual(result, 70)
         result = gauged.aggregate('foobar', Gauged.COUNT)
         self.assertEqual(result, 5)
         start = datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds=10)
@@ -265,12 +261,6 @@ class TestGauged(TestCase):
         series = gauged.aggregate_series('foobar', Gauged.SUM,
             start=10000, end=32000, interval=10000)
         self.assertListEqual(series.values, [200, 150, 40])
-        series = gauged.aggregate_series('foobar', Gauged.FIRST,
-            start=26000, end=46000, interval=10000)
-        self.assertListEqual(series.values, [40, None])
-        series = gauged.aggregate_series('foobar', Gauged.LAST,
-            start=10000, end=32000, interval=10000)
-        self.assertListEqual(series.values, [150, 30, 40])
         series = gauged.aggregate_series('foobar', Gauged.COUNT,
             start=10000, end=50000, interval=10000)
         self.assertListEqual(series.values, [2, 2, 2, 0])
