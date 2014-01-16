@@ -249,10 +249,23 @@ float gauged_map_mean(const gauged_map_t *map) {
     return total ? result / total : NAN;
 }
 
+float gauged_map_sum_of_squares(const gauged_map_t *map, float mean) {
+    gauged_array_t *array;
+    double sum = 0;
+    float element;
+    GAUGED_MAP_FOREACH_ARRAY(map, array) {
+        GAUGED_ARRAY_FOREACH(array, element) {
+            sum += (element - mean) * (element - mean);
+        }
+    }
+    return sum;
+}
+
 float gauged_map_stddev(const gauged_map_t *map) {
     gauged_array_t *array;
     float element;
-    double sum = 0, diff, mean, total = 0, sq_diff_sum = 0;
+    double sum = 0;
+    size_t total = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         total += array->length;
         GAUGED_ARRAY_FOREACH(array, element) {
@@ -262,14 +275,8 @@ float gauged_map_stddev(const gauged_map_t *map) {
     if (!total) {
         return NAN;
     }
-    mean = sum / total;
-    GAUGED_MAP_FOREACH_ARRAY(map, array) {
-        GAUGED_ARRAY_FOREACH(array, element) {
-            diff = (double)element - mean;
-            sq_diff_sum += diff * diff;
-        }
-    }
-    return sqrt(sq_diff_sum / total);
+    float mean = sum / total;
+    return sqrt(gauged_map_sum_of_squares(map, mean) / (float)total);
 }
 
 float gauged_map_count(const gauged_map_t *map) {

@@ -8,6 +8,7 @@ from hashlib import sha1
 from calendar import timegm
 from datetime import date
 from time import time
+from math import sqrt
 from .structures import SparseMap
 from .aggregates import Aggregate
 from .utilities import to_bytes
@@ -89,12 +90,12 @@ class Context(object):
                 block.free()
         return result
 
-    def aggregate(self, start=None, end=None):
+    def aggregate(self, start=None, end=None, aggregate=None):
         key = self.translated_key
         if not key:
             return None
         context = self.context
-        aggregate = context['aggregate']
+        aggregate = context['aggregate'] if aggregate is None else aggregate
         start = context['start'] if start is None else start
         end = context['end'] if end is None else end
         result = block = None
@@ -152,9 +153,25 @@ class Context(object):
                     block = None
                 if result is not None:
                     result = result / count if count else 0
-            else: # stddev, percentile, median
+            elif aggregate == Aggregate.STDDEV:
+                count = block_sum = 0
+                for block in self.block_iterator(key, start, end):
+                    block_count = block.count()
+                    if block_count:
+                        count += block_count
+                        block_sum += block.sum()
+                    block.free()
+                    block = None
+                if count:
+                    mean = block_sum / count
+                    sum_of_squares = 0
+                    for block in self.block_iterator(key, start, end):
+                        sum_of_squares += block.sum_of_squares(mean)
+                        block.free()
+                        block = None
+                    result = sqrt(sum_of_squares / float(count))
+            else: # last, percentile & median
                 block = self.query(key, start, end)
-                result = None
                 if block is not None:
                     if aggregate == Aggregate.PERCENTILE:
                         result = block.percentile(context['percentile'])

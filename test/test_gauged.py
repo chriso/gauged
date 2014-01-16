@@ -404,6 +404,7 @@ class TestGauged(TestCase):
         self.assertEqual(gauged.aggregate('foo', Gauged.MEAN, start=10000, end=30000), 150)
         self.assertEqual(gauged.aggregate('foo', Gauged.MEAN, start=11000, end=24000), 150)
         self.assertEqual(gauged.aggregate('foo', Gauged.MEAN, start=11000, end=23000), 100)
+        self.assertEqual(gauged.aggregate('foo', Gauged.STDDEV, start=11000, end=23000), 0)
 
     def test_coercing_non_string_keys(self):
         gauged = Gauged(self.driver, resolution=1000, block_size=10000)

@@ -87,15 +87,15 @@ Use `python benchmark [OPTIONS]` to run benchmarks using an in-memory database. 
 $ make build && python benchmark.py --number 1000000 --days 365
 Writing to sqlite:// (block_size=86400000, resolution=1000)
 Spreading 1M measurements to key "foobar" over 365 days
-Wrote 1M measurements in 4.789 seconds (208.8K/s) (rss: 12.3MB)
+Wrote 1M measurements in 5.388 seconds (185.6K/s) (rss: 12.7MB)
 Gauge data uses 7.6MB (8B per measurement)
-min() in 0.022s (read 45.1M measurements/s) (rss: 12.5MB)
-max() in 0.022s (read 45.3M measurements/s) (rss: 12.5MB)
-sum() in 0.022s (read 44.8M measurements/s) (rss: 12.5MB)
-count() in 0.022s (read 45.3M measurements/s) (rss: 12.5MB)
-mean() in 0.027s (read 36.9M measurements/s) (rss: 12.5MB)
-stddev() in 0.044s (read 22.7M measurements/s) (rss: 23.5MB)
-median() in 0.06s (read 16.7M measurements/s) (rss: 27.4MB)
+min() in 0.024s (read 41.9M measurements/s) (rss: 12.8MB)
+max() in 0.023s (read 43.4M measurements/s) (rss: 12.8MB)
+sum() in 0.023s (read 42.7M measurements/s) (rss: 12.8MB)
+count() in 0.024s (read 42.1M measurements/s) (rss: 12.8MB)
+mean() in 0.028s (read 36.1M measurements/s) (rss: 12.8MB)
+stddev() in 0.05s (read 20.1M measurements/s) (rss: 12.8MB)
+median() in 0.06s (read 16.8M measurements/s) (rss: 27.7MB)
 ```
 
 ## License

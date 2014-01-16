@@ -135,6 +135,11 @@ class SparseMap(object):
         '''Get the maximum of all floats in the map'''
         return Gauged.map_count(self.ptr)
 
+    def sum_of_squares(self, mean):
+        '''Get the sum of squared differences compared to the specified
+        mean'''
+        return Gauged.map_sum_of_squares(self.ptr, c_float(mean))
+
     def percentile(self, percentile):
         '''Get a percentile of all floats in the map. Since the sorting is
         done in-place, the map is no longer safe to use after calling this

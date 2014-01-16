@@ -129,6 +129,12 @@ float gauged_map_mean(const gauged_map_t *);
 float gauged_map_stddev(const gauged_map_t *);
 
 /**
+ * Get the sum of squared differences.
+ */
+
+float gauged_map_sum_of_squares(const gauged_map_t *, float mean);
+
+/**
  * Count the number of floats in the map.
  */
 
