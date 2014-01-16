@@ -70,7 +70,7 @@ struct timeval ctest_start, ctest_end;
         gettimeofday(&ctest_end, NULL); \
         ctest_elapsed = (double)(ctest_end.tv_sec - ctest_start.tv_sec) \
             + (double)(ctest_end.tv_usec - ctest_start.tv_usec) / 1000000; \
-        if (size / ctest_elapsed / 1024 / 1024 > 8192) { \
+        if (size / ctest_elapsed / 1024 / 1024 >= 10000) { \
             printf("\r    [  \x1B[32m%1.2fs\x1B[0m  \x1B[33minf MB/s\x1B[0m  ] %s", \
                 ctest_elapsed, ctest_msg); \
         } else { \

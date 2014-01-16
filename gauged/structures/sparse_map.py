@@ -7,7 +7,7 @@ Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 from types import DictType, BufferType
 from ctypes import (create_string_buffer, c_void_p, pythonapi, py_object, byref,
     cast, c_uint32, addressof, c_char, c_size_t, c_float)
-from ..bridge import Gauged, MapPtr, Uint32Ptr
+from ..bridge import Gauged, MapPtr, Uint32Ptr, FloatPtr
 from ..utilities import IS_PYPY
 from ..errors import GaugedUseAfterFreeError
 
@@ -136,7 +136,9 @@ class SparseMap(object):
         return Gauged.map_count(self.ptr)
 
     def percentile(self, percentile):
-        '''Get a percentile of all floats in the map'''
+        '''Get a percentile of all floats in the map. Since the sorting is
+        done in-place, the map is no longer safe to use after calling this
+        or median()'''
         percentile = float(percentile)
         if percentile != percentile or percentile < 0 or percentile > 100:
             raise ValueError('Expected a 0 <= percentile <= 100')
@@ -161,7 +163,7 @@ class SparseMap(object):
         header = c_size_t()
         position = c_uint32()
         arraylength = c_size_t()
-        arrayptr = Uint32Ptr()
+        arrayptr = FloatPtr()
         header_ = byref(header)
         position_ = byref(position)
         arraylength_ = byref(arraylength)

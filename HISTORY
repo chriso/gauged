@@ -1,6 +1,7 @@
 ---[ HEAD ]
 
 * Remove setuptools dependency
+* Reduce the memory requirements of percentile() and median()
 * Fixed the driver URL querystring parser
 
 ---[ 0.1.0 ]

@@ -49,4 +49,7 @@
         CTEST_EXPECT(msg, sorted); \
     } while (0)
 
+#define GAUGED_MAP_COPY(map) \
+    gauged_map_import(gauged_map_export(map), gauged_map_length(map))
+
 #endif

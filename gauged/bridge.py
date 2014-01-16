@@ -79,7 +79,6 @@ MapPtr = POINTER(Map)
 WriterPtr = POINTER(Writer)
 SizetPtr = POINTER(c_size_t)
 Uint32Ptr = POINTER(c_uint32)
-Uint32PtrPtr = POINTER(POINTER(c_uint32))
 FloatPtr = POINTER(c_float)
 
 # Load the shared library
@@ -99,7 +98,7 @@ Gauged.prototype('map_length', [MapPtr], c_size_t)
 Gauged.prototype('map_import', [Uint32Ptr, c_size_t], MapPtr)
 Gauged.prototype('map_append', [MapPtr, c_uint32, ArrayPtr], c_int)
 Gauged.prototype('map_advance', [Uint32Ptr, SizetPtr, Uint32Ptr, SizetPtr,
-    Uint32PtrPtr], Uint32Ptr)
+    POINTER(FloatPtr)], Uint32Ptr)
 Gauged.prototype('map_concat', [MapPtr, MapPtr, c_uint32, c_uint32,
     c_uint32], c_int)
 Gauged.prototype('map_first', [MapPtr], c_float)

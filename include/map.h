@@ -135,10 +135,13 @@ float gauged_map_stddev(const gauged_map_t *);
 float gauged_map_count(const gauged_map_t *);
 
 /**
- * Get a percentile of all floats in the map.
+ * Get a percentile of all floats in the map. Note that this function
+ * uses the buffer to sort the floats in-place. You'll need to create
+ * a copy of the map prior to calling this if you want to re-use it
+ * afterwards.
  */
 
-int gauged_map_percentile(const gauged_map_t *, float percentile, float *result);
+int gauged_map_percentile(gauged_map_t *, float percentile, float *result);
 
 /**
  * Provide a way to iterate over all positions/arrays in a map.
@@ -182,6 +185,6 @@ int gauged_map_percentile(const gauged_map_t *, float percentile, float *result)
           (ZTMP(buffer, __LINE__) += ZTMP(header, __LINE__) + ZTMP(s, __LINE__).length), \
           1) : 0)
 
-uint32_t *gauged_map_advance(uint32_t *, size_t *, uint32_t *, size_t *, uint32_t **);
+uint32_t *gauged_map_advance(uint32_t *, size_t *, uint32_t *, size_t *, float **);
 
 #endif

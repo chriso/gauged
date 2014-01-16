@@ -27,7 +27,7 @@ void gauged_map_debug(const gauged_map_t *map) {
 
 int main() {
     gauged_array_t *array;
-    gauged_map_t *map;
+    gauged_map_t *map, *copy;
     float percentile;
 
     GAUGED_SUITE("Writer");
@@ -115,11 +115,11 @@ int main() {
     GAUGED_EXPECT_SORTED("Array sorting (1M+)", large);
     gauged_array_free(large);
 
-    gauged_array_t *copy = gauged_array_import(gauged_array_export(array),
+    gauged_array_t *array_copy = gauged_array_import(gauged_array_export(array),
         gauged_array_length(array));
-    assert(copy);
+    assert(array_copy);
     GAUGED_EXPECT_EQUALS("Array import/export", array, 1, 6, 8, 10);
-    gauged_array_free(copy);
+    gauged_array_free(array_copy);
 
     GAUGED_SUITE("Maps");
 
@@ -166,20 +166,41 @@ int main() {
     GAUGED_EXPECT("Map stddev", abs(gauged_map_stddev(map) - 9.224062735) < 0.000001);
     GAUGED_EXPECT("Map count", gauged_map_count(map) == 6);
 
+    copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 0, &percentile);
     GAUGED_EXPECT("Map percentile 0", percentile == -8);
+    gauged_map_free(map);
+    map = copy;
+    copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 40, &percentile);
     GAUGED_EXPECT("Map percentile 40", percentile == 5.5);
+    gauged_map_free(map);
+    map = copy;
+    copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 50, &percentile);
     GAUGED_EXPECT("Map percentile 50", percentile == 7.75);
+    gauged_map_free(map);
+    map = copy;
+    copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 75, &percentile);
     GAUGED_EXPECT("Map percentile 75", percentile == 13.375);
+    gauged_map_free(map);
+    map = copy;
+    copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 90, &percentile);
     GAUGED_EXPECT("Map percentile 90", percentile == 17.25);
+    gauged_map_free(map);
+    map = copy;
+    copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 100, &percentile);
     GAUGED_EXPECT("Map percentile 100", percentile == 20);
+    gauged_map_free(map);
+    map = copy;
+    copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, -10, &percentile);
     GAUGED_EXPECT("Map percentile invalid", isnan(percentile));
+    gauged_map_free(map);
+    map = copy;
 
     gauged_array_clear(array);
     gauged_map_clear(map);

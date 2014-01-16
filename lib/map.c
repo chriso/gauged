@@ -74,7 +74,7 @@ void gauged_map_clear(gauged_map_t *map) {
 }
 
 uint32_t *gauged_map_advance(uint32_t *buffer, size_t *header, uint32_t *position,
-        size_t *length, uint32_t **array) {
+        size_t *length, float **array) {
     if (*buffer & (1 << 31)) {
         *length = (*buffer >> 22) & 0x1FF;
         *position = *buffer & 0x3FFFFF;
@@ -85,7 +85,7 @@ uint32_t *gauged_map_advance(uint32_t *buffer, size_t *header, uint32_t *positio
         *header = 2;
     }
     if (array) {
-        *array = buffer + *header;
+        *array = (float *)(buffer + *header);
     }
     return *header + *length + buffer;
 }
@@ -143,19 +143,35 @@ int gauged_map_concat(gauged_map_t *a, const gauged_map_t *b, uint32_t start,
     return GAUGED_OK;
 }
 
-static inline gauged_array_t *gauged_map_merge(const gauged_map_t *map) {
-    gauged_array_t *array, *merged = gauged_array_new();
-    if (!merged) {
-        return NULL;
+static inline gauged_array_t *gauged_map_merge(gauged_map_t *map) {
+    gauged_array_t *merged = gauged_array_new();
+    gauged_map_t *replacement = gauged_map_new();
+    if (!merged || !replacement) {
+        goto error;
     }
-    GAUGED_MAP_FOREACH_ARRAY(map, array) {
-        if (!gauged_array_concat(merged, array)) {
-            goto error;
+    free(merged->buffer);
+    merged->buffer = (float *)map->buffer;
+    merged->size = map->size;
+    gauged_array_t array;
+    uint32_t position, *buffer = map->buffer, *end = map->buffer + map->length;
+    size_t header;
+    while (buffer < end) {
+        buffer = gauged_map_advance(buffer, &header, &position, &array.length, &array.buffer);
+        for (size_t i = 0; i < array.length; i++) {
+            (merged->buffer + merged->length)[i] = array.buffer[i];
         }
+        merged->length += array.length;
     }
+    (void)position;
+    (void)header;
+    map->buffer = replacement->buffer;
+    map->size = replacement->size;
+    map->length = 0;
+    free(replacement);
     return merged;
 error:
-    gauged_array_free(merged);
+    if (merged) gauged_array_free(merged);
+    if (replacement) gauged_map_free(replacement);
     return NULL;
 }
 
@@ -265,9 +281,9 @@ float gauged_map_count(const gauged_map_t *map) {
     return result;
 }
 
-int gauged_map_percentile(const gauged_map_t *map, float percentile,
+int gauged_map_percentile(gauged_map_t *map, float percentile,
         float *result_) {
-    if (percentile < 0 || percentile > 100 || isnan(percentile)) {
+    if (!map->length || percentile < 0 || percentile > 100 || isnan(percentile)) {
         *result_ = NAN;
         return GAUGED_OK;
     }
