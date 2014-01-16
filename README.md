@@ -6,8 +6,9 @@ A fast, append-only storage layer for gauges, counters, timers and other numeric
 
 Features:
 
+- Comfortably handle billions of data points on a single node.
 - Support for sparse data (unlike the fixed-size RRDtool).
-- Cache-aware data structures and algorithms for speed and memory-efficiency - comfortably handle 100+ million data points on a single node.
+- Cache-aware data structures and algorithms for speed and memory-efficiency.
 - Efficient range queries and roll-ups of any size down to the configurable resolution of 1 second.
 - Use either `MySQL`, `PostgreSQL` or `SQLite` as a backend.
 
@@ -81,10 +82,11 @@ You can run coverage analysis with `make coverage` and run a lint tool `make lin
 
 ## Benchmarks
 
-Use `python benchmark [OPTIONS]` to run benchmarks using an in-memory database. Your mileage will vary once you add I/O
+Use `make build` followed by `python benchmark [OPTIONS]` to run benchmarks using a SQLite-based in-memory database. Your mileage will vary once you add I/O.
 
-```bash
-$ make build && python benchmark.py --number 1000000 --days 365
+**python benchmark.py --number 1000000 --days 365**
+
+```
 Writing to sqlite:// (block_size=86400000, resolution=1000)
 Spreading 1M measurements to key "foobar" over 365 days
 Wrote 1M measurements in 5.388 seconds (185.6K/s) (rss: 12.7MB)
@@ -96,6 +98,22 @@ count() in 0.024s (read 42.1M measurements/s) (rss: 12.8MB)
 mean() in 0.028s (read 36.1M measurements/s) (rss: 12.8MB)
 stddev() in 0.05s (read 20.1M measurements/s) (rss: 12.8MB)
 median() in 0.06s (read 16.8M measurements/s) (rss: 27.7MB)
+```
+
+**python benchmark.py --number 100000000 --days 365**
+
+```
+Writing to sqlite:// (block_size=86400000, resolution=1000)
+Spreading 100M measurements to key "foobar" over 365 days
+Wrote 100M measurements in 405.925 seconds (246.4K/s) (rss: 21.7MB)
+Gauge data uses 502.2MB (5.26601144B per measurement)
+min() in 0.818s (read 122.3M measurements/s) (rss: 21.7MB)
+max() in 0.79s (read 126.6M measurements/s) (rss: 21.7MB)
+sum() in 0.785s (read 127.4M measurements/s) (rss: 21.7MB)
+count() in 0.766s (read 130.5M measurements/s) (rss: 21.7MB)
+mean() in 0.891s (read 112.3M measurements/s) (rss: 21.7MB)
+stddev() in 1.697s (read 58.9M measurements/s) (rss: 21.7MB)
+median() in 3.547s (read 28.2M measurements/s) (rss: 1007.9MB)
 ```
 
 ## License
