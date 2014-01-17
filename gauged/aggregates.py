@@ -16,3 +16,5 @@ class Aggregate(object):
     COUNT = 'count'
 
     ALL = set(( SUM, MIN, MAX, MEAN, STDDEV, PERCENTILE, MEDIAN, COUNT ))
+
+    ASSOCIATIVE = set(( SUM, MIN, MAX, MEAN, COUNT ))

@@ -32,6 +32,7 @@ class Context(object):
             if value is not None:
                 self.context[key] = value
         self.check_timestamps()
+        self.suppress_interval_size_error = False
 
     def keys(self):
         context = self.context
@@ -43,7 +44,7 @@ class Context(object):
         start, end = context['start'], context['end']
         block_size = self.config.block_size
         start_block = start // block_size
-        end_block, end_array = divmod(end, block_size)
+        end_block, end_array = end // block_size, end % block_size
         if not end_array:
             end_block -= 1
         start = start_block * block_size
@@ -53,15 +54,15 @@ class Context(object):
             start_block, end_block)
         return Statistics(namespace, start, end, stats[0], stats[1])
 
-    def value(self, timestamp=None):
-        key = self.translated_key
-        if not key:
+    def value(self, timestamp=None, key=None):
+        key = self.translated_key if key is None else key
+        if key is None:
             return None
         context, config = self.context, self.config
         block_size = config.block_size
         look_behind = config.max_look_behind // block_size
         timestamp = context['end'] if timestamp is None else timestamp
-        end_block, offset = divmod(timestamp, block_size)
+        end_block, offset = timestamp // block_size, timestamp % block_size
         offset = offset // config.resolution
         get_block = self.get_block
         result = block = None
@@ -90,21 +91,48 @@ class Context(object):
                 block.free()
         return result
 
-    def aggregate(self, start=None, end=None, aggregate=None):
-        key = self.translated_key
-        if not key:
+    def aggregate(self, start=None, end=None, aggregate=None, key=None):
+        key = self.translated_key if key is None else key
+        if key is None:
             return None
         context = self.context
         aggregate = context['aggregate'] if aggregate is None else aggregate
         start = context['start'] if start is None else start
         end = context['end'] if end is None else end
         result = block = None
-        aggregate = context['aggregate']
         if aggregate not in Aggregate.ALL:
             raise ValueError('Unknown aggregate: %s' % aggregate)
+        block_size = self.config.block_size
+        start_block, start_array = start // block_size, start % block_size
+        end_block = end // block_size
+        if start_array:
+            start_block += 1
+        # Can we break the operation up into smaller chunks that utilise the
+        # aggregate_series() cache and then combine the results?
+        if start_block + 1 < end_block and aggregate in Aggregate.ASSOCIATIVE:
+            block_boundary_start = start_block * block_size
+            block_boundary_end = end_block * block_size
+            values = []
+            if start < block_boundary_start:
+                values.append(self.aggregate(start, block_boundary_start, aggregate, key))
+            self.suppress_interval_size_error = True
+            values.extend(self.aggregate_series(block_boundary_start, block_boundary_end,
+                aggregate, key, block_size).values)
+            if end > block_boundary_end:
+                values.append(self.aggregate(block_boundary_end, end, aggregate, key))
+            values = [ value for value in values if value is not None ]
+            if aggregate == Aggregate.SUM:
+                result = sum(values) if len(values) else None
+            elif aggregate == Aggregate.MIN:
+                result = min(values) if len(values) else None
+            elif aggregate == Aggregate.MAX:
+                result = max(values) if len(values) else None
+            elif aggregate == Aggregate.MEAN:
+                result = sum(values) / len(values) if len(values) else None
+            else: # Aggregate.COUNT
+                result = sum(values) if len(values) else 0
+            return result
         try:
-            # TODO: Certain aggregates could call aggregate_series()
-            # to utilise the cache and then aggregate the results
             if aggregate == Aggregate.SUM:
                 for block in self.block_iterator(key, start, end):
                     if result is None:
@@ -146,22 +174,16 @@ class Context(object):
                 if result is not None:
                     result = result / count if count else 0
             elif aggregate == Aggregate.STDDEV:
-                count = block_sum = 0
-                for block in self.block_iterator(key, start, end):
-                    block_count = block.count()
-                    if block_count:
-                        count += block_count
-                        block_sum += block.sum()
-                    block.free()
-                    block = None
+                count = self.aggregate(start, end, Aggregate.COUNT, key)
                 if count:
+                    block_sum = self.aggregate(start, end, Aggregate.SUM, key)
                     mean = block_sum / count
                     sum_of_squares = 0
                     for block in self.block_iterator(key, start, end):
                         sum_of_squares += block.sum_of_squares(mean)
                         block.free()
                         block = None
-                    result = sqrt(sum_of_squares / float(count))
+                    result = sqrt(sum_of_squares / count)
             else: # percentile & median
                 block = self.query(key, start, end)
                 if block is not None:
@@ -176,7 +198,7 @@ class Context(object):
 
     def value_series(self):
         key = self.translated_key
-        if not key or self.no_data:
+        if key is None or self.no_data:
             return TimeSeries([])
         context = self.context
         start = context['start']
@@ -185,7 +207,8 @@ class Context(object):
         interval = self.interval
         cache = self.cache
         if cache:
-            cache_key = self.cache_key
+            cache_key = sha1(str(dict(key=key,
+                look_behind=self.config.max_look_behind))).digest()
             driver = self.driver
             cached = dict(driver.get_cache(namespace, cache_key, interval, start, end))
         else:
@@ -194,7 +217,7 @@ class Context(object):
         value_fn = self.value
         while start < end:
             group_end = min(end, start + interval)
-            value = cached[start] if start in cached else value_fn(start)
+            value = cached[start] if start in cached else value_fn(start, key)
             values.append(( start, group_end, value ))
             start += interval
         if cache:
@@ -208,18 +231,20 @@ class Context(object):
         return TimeSeries(( (start, value) for start, _, value in values \
             if value is not None ))
 
-    def aggregate_series(self):
-        key = self.translated_key
-        if not key or self.no_data:
+    def aggregate_series(self, start=None, end=None, aggregate=None,
+            key=None, interval=None):
+        key = self.translated_key if key is None else key
+        if key is None or self.no_data:
             return TimeSeries([])
         context = self.context
-        start = context['start']
-        end = context['end']
+        start = context['start'] if start is None else start
+        end = context['end'] if end is None else end
+        aggregate = context['aggregate'] if aggregate is None else aggregate
         namespace = self.namespace
-        interval = self.interval
+        interval = self.interval if interval is None else interval
         cache = self.cache
         if cache:
-            cache_key = self.cache_key
+            cache_key = sha1(str(dict(key=key, aggregate=aggregate))).digest()
             driver = self.driver
             cached = dict(driver.get_cache(namespace, cache_key, interval, start, end))
         else:
@@ -228,7 +253,10 @@ class Context(object):
         aggregate_fn = self.aggregate
         while start < end:
             group_end = min(end, start + interval)
-            result = cached[start] if start in cached else aggregate_fn(start, group_end)
+            if start in cached:
+                result = cached[start]
+            else:
+                result = aggregate_fn(start, group_end, aggregate)
             values.append(( start, group_end, result ))
             start += interval
         if cache:
@@ -244,8 +272,8 @@ class Context(object):
     def block_iterator(self, key, start, end, yield_if_empty=False):
         config = self.config
         block_size, resolution = config.block_size, config.resolution
-        start_block, start_array = divmod(start, block_size)
-        end_block, end_array = divmod(end, block_size)
+        start_block, start_array = start // block_size, start % block_size
+        end_block, end_array = end // block_size, end % block_size
         start_array, end_array = start_array // resolution, end_array // resolution
         if not end_array:
             end_block -= 1
@@ -363,15 +391,7 @@ class Context(object):
         if interval <= 0:
             raise GaugedIntervalSizeError
         interval_steps = (context['end'] - context['start']) // interval
-        if interval_steps > self.config.max_interval_steps:
+        if interval_steps > self.config.max_interval_steps \
+                and not self.suppress_interval_size_error:
             raise GaugedIntervalSizeError
         return interval
-
-    @property
-    def cache_key(self):
-        context = self.context
-        return sha1(str({
-            'key': context['key'],
-            'aggregate': context['aggregate'],
-            'look_behind': self.config.max_look_behind
-        })).digest()

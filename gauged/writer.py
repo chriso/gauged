@@ -138,7 +138,7 @@ class Writer(object):
         current_block = self.current_block
         statistics = self.statistics
         driver = self.driver
-        flags = 0 # TODO: for future extensions, e.g. block compression
+        flags = 0 # for future extensions, e.g. block compression
         for namespace, key, block in self.pending_blocks():
             length = block.byte_length()
             if not length:
@@ -169,7 +169,8 @@ class Writer(object):
     def clear_from(self, timestamp):
         '''Clear all data from `timestamp` onwards. Note that the timestamp
         is rounded down to the nearest block boundary'''
-        offset, remainder = divmod(timestamp, self.config.block_size)
+        block_size = self.config.block_size
+        offset, remainder = timestamp // block_size, timestamp % block_size
         if remainder:
             raise ValueError('Timestamp must be on a block boundary')
         self.driver.clear_from(offset, timestamp)

@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=C0111, R0923, R0801, W0142, W0212, I0011, bad-whitespace, fixme
+disable=C0111, R0923, R0801, W0142, W0212, I0011, bad-whitespace
 
 # C0111: Missing {class,method,function} docstring
 # R0923: Interface not implemented

@@ -161,6 +161,8 @@ class TestGauged(TestCase):
             writer.add('foobar', 250, timestamp=20000)
             writer.add('foobar', 350, timestamp=40000)
             writer.add('foobar', 70, timestamp=60000)
+        self.assertEqual(gauged.aggregate('foobar', Gauged.MIN, start=11000), 70)
+        self.assertEqual(gauged.aggregate('foobar', Gauged.MIN, start=11000, end=55000), 150)
         self.assertEqual(gauged.aggregate('foobar', Gauged.SUM), 870)
         self.assertEqual(gauged.aggregate('foobar', Gauged.MIN), 50)
         self.assertEqual(gauged.aggregate('foobar', Gauged.MAX), 350)
@@ -264,6 +266,12 @@ class TestGauged(TestCase):
         series = gauged.aggregate_series('foobar', Gauged.COUNT,
             start=10000, end=50000, interval=10000)
         self.assertListEqual(series.values, [2, 2, 2, 0])
+        series = gauged.aggregate_series('foobar', Gauged.MIN,
+            start=12000, end=42000, interval=10000)
+        self.assertListEqual(series.values, [120, 30, 10])
+        series = gauged.aggregate_series('foobar', Gauged.MAX,
+            start=12000, end=42000, interval=10000)
+        self.assertListEqual(series.values, [150, 40, 10])
 
     def test_aggregate_series_caching(self):
         gauged = Gauged(self.driver, block_size=10000, min_cache_interval=1)
