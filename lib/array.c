@@ -17,7 +17,6 @@ gauged_array_t *gauged_array_import(const float *buffer, size_t length) {
         return NULL;
     }
     if (length) {
-        array->buffer = malloc(length);
         array->size = array->length = length / sizeof(float);
     } else {
         array->size = GAUGED_ARRAY_INITIAL_SIZE;
