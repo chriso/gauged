@@ -11,23 +11,20 @@
 #include "array.h"
 #include "sort.h"
 
-gauged_array_t *gauged_array_import(const float *buffer, size_t length) {
+gauged_array_t *gauged_array_import(const float *buffer, size_t size) {
     gauged_array_t *array = malloc(sizeof(gauged_array_t));
     if (!array) {
         return NULL;
     }
-    if (length) {
-        array->size = array->length = length / sizeof(float);
-    } else {
-        array->size = GAUGED_ARRAY_INITIAL_SIZE;
-        array->length = 0;
-    }
+    array->length = 0;
+    array->size = size ? size / sizeof(float) : GAUGED_ARRAY_INITIAL_SIZE;
     array->buffer = malloc(array->size * sizeof(float));
     if (!array->buffer) {
         goto error;
     }
     if (buffer) {
-        memcpy(array->buffer, buffer, length);
+        memcpy(array->buffer, buffer, size);
+        array->length = array->size;
     }
     return array;
 error:

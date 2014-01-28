@@ -12,23 +12,20 @@
 #include "map.h"
 #include "hash.h"
 
-gauged_map_t *gauged_map_import(const uint32_t *buffer, size_t length) {
+gauged_map_t *gauged_map_import(const uint32_t *buffer, size_t size) {
     gauged_map_t *map = malloc(sizeof(gauged_map_t));
     if (!map) {
         return NULL;
     }
-    if (length) {
-        map->size = map->length = length / sizeof(uint32_t);
-    } else {
-        map->size = GAUGED_MAP_INITIAL_SIZE;
-        map->length = 0;
-    }
+    map->length = 0;
+    map->size = size ? size / sizeof(uint32_t) : GAUGED_MAP_INITIAL_SIZE;
     map->buffer = malloc(map->size * sizeof(uint32_t));
     if (!map->buffer) {
         goto error;
     }
     if (buffer) {
-        memcpy(map->buffer, buffer, length);
+        memcpy(map->buffer, buffer, size);
+        map->length = map->size;
     }
     return map;
 error:
