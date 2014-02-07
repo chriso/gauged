@@ -22,7 +22,7 @@ setup(
     author = 'Chris O\'Hara',
     author_email = 'cohara87@gmail.com',
     description = 'A fast, append-only storage layer for numeric data that changes over time',
-    license = 'GPL',
+    license = 'MIT',
     url = 'https://github.com/chriso/gauged',
     ext_modules = [gauged],
     packages = ['gauged', 'gauged.errors', 'gauged.results',
