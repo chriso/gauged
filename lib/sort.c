@@ -20,7 +20,7 @@ static inline void gauged_sort_insertion(uint32_t *array, uint32_t offset, size_
     }
 }
 
-void gauged_sort_radix(uint32_t *array, uint32_t offset, size_t end, uint32_t shift) {
+static void gauged_sort_radix(uint32_t *array, uint32_t offset, size_t end, uint32_t shift) {
     uint32_t x, y, value, temp;
     uint32_t last[256] = { 0 }, pointer[256];
     for (x = offset; x < end; ++x) {
@@ -58,9 +58,9 @@ void gauged_sort_radix(uint32_t *array, uint32_t offset, size_t end, uint32_t sh
     }
 }
 
-static inline void gauged_sort_merge_buffer(uint32_t n, uint32_t * restrict out,
-        uint32_t nl, uint32_t * restrict inl,
-        uint32_t nu, uint32_t * restrict inu) {
+static inline void gauged_sort_merge_buffer(size_t n, uint32_t * restrict out,
+        size_t nl, uint32_t * restrict inl,
+        size_t nu, uint32_t * restrict inu) {
     size_t pos = 0, i = 0, j = 0;
     while (pos < n) {
         if (j >= nu || (i < nl && inl[i] <= inu[j])) {
@@ -71,7 +71,7 @@ static inline void gauged_sort_merge_buffer(uint32_t n, uint32_t * restrict out,
     }
 }
 
-void *gauged_sort_merge(void *data) {
+static void *gauged_sort_merge(void *data) {
     gauged_mergesort_t *params = data;
     if (params->depth == GAUGED_SORT_MERGESORT_MAX_DEPTH ||
             params->size <= GAUGED_SORT_RADIXSORT_MAX) {

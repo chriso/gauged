@@ -10,21 +10,6 @@
 
 #include "test.h"
 
-void gauged_map_debug(const gauged_map_t *map) {
-    gauged_array_t *array;
-    uint32_t position;
-    GAUGED_MAP_FOREACH(map, position, array) {
-        printf("[ %u ] = [", position);
-        if (array->length) {
-            printf("%.2f", array->buffer[0]);
-            for (size_t i = 1; i < array->length; i++) {
-                printf(", %.2f", array->buffer[i]);
-            }
-        }
-        printf("]\n");
-    }
-}
-
 int main() {
     gauged_array_t *array;
     gauged_map_t *map, *copy;
@@ -59,16 +44,16 @@ int main() {
                 if (!strcmp("foo", node->key)) {
                     GAUGED_EXPECT("Pending map stores the namespace A", 0 == node->namespace_);
                     GAUGED_EXPECT("Pending map stores the key A", 0 == strcmp("foo", node->key));
-                    GAUGED_EXPECT("Pending map stores the map A", gauged_map_sum(map) == 30);
+                    GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map A", gauged_map_sum(map), 30);
                 } else {
                     GAUGED_EXPECT("Pending map stores the namespace B", 0 == node->namespace_);
                     GAUGED_EXPECT("Pending map stores the key B", 0 == strcmp("baz", node->key));
-                    GAUGED_EXPECT("Pending map stores the map B", gauged_map_sum(map) == 50);
+                    GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map B", gauged_map_sum(map), 50);
                 }
             } else if (node->namespace_ == 1) {
                 GAUGED_EXPECT("Pending map stores the namespace C", 1 == node->namespace_);
                 GAUGED_EXPECT("Pending map stores the key C", 0 == strcmp("baz", node->key));
-                GAUGED_EXPECT("Pending map stores the map C", gauged_map_sum(map) == 130);
+                GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map C", gauged_map_sum(map), 130);
             }
             expected_maps++;
         }
@@ -133,13 +118,13 @@ int main() {
     gauged_map_append(map, 15, array);
     gauged_map_append(map, 20, array);
 
-    GAUGED_EXPECT("Map append A", gauged_map_sum(map) == 225);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map append A", gauged_map_sum(map), 225);
     GAUGED_EXPECT("Map append B", gauged_map_length(map) == 36);
 
     gauged_map_t *map_copy = gauged_map_import(gauged_map_export(map),
         gauged_map_length(map));
     assert(map_copy);
-    GAUGED_EXPECT("Map copy", gauged_map_sum(map_copy) == 225);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map copy", gauged_map_sum(map), 225);
     gauged_map_free(map_copy);
 
     GAUGED_SUITE("Aggregates");
@@ -157,43 +142,43 @@ int main() {
     gauged_array_append(array, 14.5);
     gauged_map_append(map, 13, array);
 
-    GAUGED_EXPECT("Map first", gauged_map_first(map) == 0);
-    GAUGED_EXPECT("Map last", gauged_map_last(map) == 14.5);
-    GAUGED_EXPECT("Map sum", gauged_map_sum(map) == 42.0);
-    GAUGED_EXPECT("Map min", gauged_map_min(map) == -8.0);
-    GAUGED_EXPECT("Map max", gauged_map_max(map) == 20.0);
-    GAUGED_EXPECT("Map mean", gauged_map_mean(map) == 7.0);
-    GAUGED_EXPECT("Map stddev", abs(gauged_map_stddev(map) - 9.224062735) < 0.000001);
-    GAUGED_EXPECT("Map count", gauged_map_count(map) == 6);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map first", gauged_map_first(map), 0);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map last", gauged_map_last(map), 14.5);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map sum", gauged_map_min(map), 42);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map min", gauged_map_min(map), -8);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map max", gauged_map_max(map), 20);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map mean", gauged_map_mean(map), 7);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map stddev", gauged_map_stddev(map), 9.224062735);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map count", gauged_map_count(map), 6);
 
     copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 0, &percentile);
-    GAUGED_EXPECT("Map percentile 0", percentile == -8);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map percentile 0", percentile, -8);
     gauged_map_free(map);
     map = copy;
     copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 40, &percentile);
-    GAUGED_EXPECT("Map percentile 40", percentile == 5.5);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map percentile 40", percentile, 5.5);
     gauged_map_free(map);
     map = copy;
     copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 50, &percentile);
-    GAUGED_EXPECT("Map percentile 50", percentile == 7.75);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map percentile 50", percentile, 7.75);
     gauged_map_free(map);
     map = copy;
     copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 75, &percentile);
-    GAUGED_EXPECT("Map percentile 75", percentile == 13.375);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map percentile 75", percentile, 13.375);
     gauged_map_free(map);
     map = copy;
     copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 90, &percentile);
-    GAUGED_EXPECT("Map percentile 90", percentile == 17.25);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map percentile 90", percentile, 17.25);
     gauged_map_free(map);
     map = copy;
     copy = GAUGED_MAP_COPY(map);
     gauged_map_percentile(map, 100, &percentile);
-    GAUGED_EXPECT("Map percentile 100", percentile == 20);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map percentile 100", percentile, 20);
     gauged_map_free(map);
     map = copy;
     copy = GAUGED_MAP_COPY(map);
@@ -210,7 +195,7 @@ int main() {
     }
     gauged_map_append(map, 10, array);
     gauged_map_percentile(map, 99, &percentile);
-    GAUGED_EXPECT("Map percentile large", abs(percentile - 990.01) < 0.00001);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map percentile large", percentile, 990.01);
 
     gauged_map_free(map);
     gauged_array_free(array);

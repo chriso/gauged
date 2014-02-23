@@ -11,9 +11,9 @@
 #include <assert.h>
 
 static double ctest_elapsed;
-static unsigned ctest_fails = 0, ctest_last = 0;
+static int ctest_fails = 0, ctest_last = 0;
 static char *ctest_msg = NULL;
-struct timeval ctest_start, ctest_end;
+static struct timeval ctest_start, ctest_end;
 
 #define CTEST_SUITE(name) \
     do { \

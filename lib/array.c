@@ -44,7 +44,7 @@ gauged_array_t *gauged_array_new_values(size_t length, ...) {
     va_list va;
     va_start(va, length);
     for (size_t i = 0; i < length; i++) {
-        gauged_array_append(array, va_arg(va, double));
+        gauged_array_append(array, (float)va_arg(va, double));
     }
     va_end(va);
     return array;

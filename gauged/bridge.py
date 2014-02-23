@@ -56,8 +56,8 @@ class Map(Structure):
 class WriterHashNode(Structure):
     '''A wrapper for the C type gauged_writer_hash_node_t'''
 
-WriterHashNode._fields_ = [('namespace', c_uint32), ('key', c_char_p),
-    ('map', POINTER(Map)), ('array', POINTER(Array)),
+WriterHashNode._fields_ = [('key', c_char_p), ('map', POINTER(Map)),
+    ('array', POINTER(Array)),('namespace', c_uint32),
     ('seed', c_uint32), ('next', POINTER(WriterHashNode))]
 
 class WriterHash(Structure):

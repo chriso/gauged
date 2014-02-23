@@ -19,16 +19,21 @@
 #define GAUGED_TMP_A(var, line) GAUGED_TMP_B(var, line)
 #define GAUGED_TMP_B(var, line) var##line
 
+#define GAUGED_FLOAT_DIFF 0.00001f
+
+#define GAUGED_EXPECT_FLOAT_EQUALS(msg, value, expected) \
+    CTEST_EXPECT(msg, fabs((float)value - (float)expected < GAUGED_FLOAT_DIFF))
+
 #define GAUGED_EXPECT_EQUALS(msg, array, ...) \
     do { \
         float GAUGED_TMP_A(arr, __LINE__)[] = { __VA_ARGS__ }; \
-        size_t expected = sizeof(GAUGED_TMP_A(arr, __LINE__)) / sizeof(float); \
+        size_t GAUGED_TMP_A(exp, __LINE__) = sizeof(GAUGED_TMP_A(arr, __LINE__)) / sizeof(float); \
         bool mismatch = false; \
-        if (!array || array->length != expected) { \
+        if (!array || array->length != GAUGED_TMP_A(exp, __LINE__)) { \
             mismatch = true; \
         } else { \
-            for (size_t i = 0; i < expected; i++) { \
-                if (array->buffer[i] != GAUGED_TMP_A(arr, __LINE__)[i]) { \
+            for (size_t i = 0; i < GAUGED_TMP_A(exp, __LINE__); i++) { \
+                if (fabs(array->buffer[i] - GAUGED_TMP_A(arr, __LINE__)[i]) >= GAUGED_FLOAT_DIFF) { \
                     mismatch = true; \
                     break; \
                 } \

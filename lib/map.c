@@ -72,12 +72,12 @@ void gauged_map_clear(gauged_map_t *map) {
 
 uint32_t *gauged_map_advance(uint32_t *buffer, size_t *header, uint32_t *position,
         size_t *length, float **array) {
-    if (*buffer & (1 << 31)) {
+    if (*buffer & 0x80000000) {
         *length = (*buffer >> 22) & 0x1FF;
         *position = *buffer & 0x3FFFFF;
         *header = 1;
     } else {
-        *length = *buffer & ~(1 << 31);
+        *length = *buffer & 0x3FFFFFFF;
         *position = buffer[1];
         *header = 2;
     }
@@ -96,7 +96,7 @@ static inline void gauged_map_encode(uint32_t *buffer, uint32_t position, size_t
         const gauged_array_t *array) {
     size_t header = gauged_map_header_size(position, length);
     if (header == 1) {
-        *buffer = (1 << 31) | (uint32_t)(length << 22) | position;
+        *buffer = 0x80000000 | (uint32_t)(length << 22) | position;
     } else {
         buffer[0] = (uint32_t)length & 0x7FFFFFFF;
         buffer[1] = position;
@@ -198,18 +198,18 @@ float gauged_map_last(const gauged_map_t *map) {
 float gauged_map_sum(const gauged_map_t *map) {
     gauged_array_t *array;
     double result = 0;
-    float element;
+    float element = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         GAUGED_ARRAY_FOREACH(array, element) {
             result += element;
         }
     }
-    return result;
+    return (float)result;
 }
 
 float gauged_map_min(const gauged_map_t *map) {
     gauged_array_t *array;
-    float element, result = INFINITY;
+    float element = 0, result = INFINITY;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         GAUGED_ARRAY_FOREACH(array, element) {
             if (element < result) {
@@ -217,12 +217,12 @@ float gauged_map_min(const gauged_map_t *map) {
             }
         }
     }
-    return result == INFINITY ? NAN : result;
+    return isinf(result) ? NAN : result;
 }
 
 float gauged_map_max(const gauged_map_t *map) {
     gauged_array_t *array;
-    float element, result = -INFINITY;
+    float element = 0, result = -INFINITY;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         GAUGED_ARRAY_FOREACH(array, element) {
             if (element > result) {
@@ -230,12 +230,12 @@ float gauged_map_max(const gauged_map_t *map) {
             }
         }
     }
-    return result == -INFINITY ? NAN : result;
+    return isinf(result) ? NAN : result;
 }
 
 float gauged_map_mean(const gauged_map_t *map) {
     gauged_array_t *array;
-    float element;
+    float element = 0;
     double result = 0, total = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         total += array->length;
@@ -243,24 +243,24 @@ float gauged_map_mean(const gauged_map_t *map) {
             result += element;
         }
     }
-    return total ? result / total : NAN;
+    return total ? (float)result / (float)total : NAN;
 }
 
 float gauged_map_sum_of_squares(const gauged_map_t *map, float mean) {
     gauged_array_t *array;
     double sum = 0;
-    float element;
+    float element = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         GAUGED_ARRAY_FOREACH(array, element) {
             sum += (element - mean) * (element - mean);
         }
     }
-    return sum;
+    return (float)sum;
 }
 
 float gauged_map_stddev(const gauged_map_t *map) {
     gauged_array_t *array;
-    float element;
+    float element = 0;
     double sum = 0;
     size_t total = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
@@ -272,8 +272,8 @@ float gauged_map_stddev(const gauged_map_t *map) {
     if (!total) {
         return NAN;
     }
-    float mean = sum / total;
-    return sqrt(gauged_map_sum_of_squares(map, mean) / (float)total);
+    float mean = (float)sum / (float)total;
+    return (float)sqrt(gauged_map_sum_of_squares(map, mean) / (float)total);
 }
 
 float gauged_map_count(const gauged_map_t *map) {
@@ -299,8 +299,8 @@ int gauged_map_percentile(gauged_map_t *map, float percentile,
     }
     gauged_array_sort(values);
     rank = (float)(values->length - 1) * percentile / 100;
-    nearest_rank = floor(rank);
-    if (rank == nearest_rank) {
+    nearest_rank = (float)floor(rank);
+    if (ceil(rank) == nearest_rank) {
         result = values->buffer[(size_t)rank];
     } else {
         result = values->buffer[(size_t)nearest_rank];

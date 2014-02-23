@@ -163,11 +163,11 @@ int gauged_map_percentile(gauged_map_t *, float percentile, float *result);
     uint32_t *ZTMP(buffer, __LINE__) = map->buffer; \
     uint32_t *ZTMP(end, __LINE__) = map->buffer + map->length; \
     while (ZTMP(buffer, __LINE__) < ZTMP(end, __LINE__) \
-        ? (((*ZTMP(buffer, __LINE__) & (1 << 31)) \
+        ? (((*ZTMP(buffer, __LINE__) & 0x80000000) \
             ? ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__) >> 22) & 0x1FF), \
               (position = *ZTMP(buffer, __LINE__) & 0x3FFFFF), \
               (ZTMP(header, __LINE__) = 1)) \
-            : ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__)) & ~(1 << 31)), \
+            : ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__)) & 0x3FFFFFFF), \
               (position = ZTMP(buffer, __LINE__)[1]), \
               (ZTMP(header, __LINE__) = 2))), \
           (ZTMP(s, __LINE__).buffer = (float *) ZTMP(buffer, __LINE__) + ZTMP(header, __LINE__)), \
@@ -182,10 +182,10 @@ int gauged_map_percentile(gauged_map_t *, float percentile, float *result);
     uint32_t *ZTMP(buffer, __LINE__) = map->buffer; \
     uint32_t *ZTMP(end, __LINE__) = map->buffer + map->length; \
     while (ZTMP(buffer, __LINE__) < ZTMP(end, __LINE__) \
-        ? (((*ZTMP(buffer, __LINE__) & (1 << 31)) \
+        ? (((*ZTMP(buffer, __LINE__) & 0x80000000) \
             ? ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__) >> 22) & 0x1FF), \
               (ZTMP(header, __LINE__) = 1)) \
-            : ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__)) & ~(1 << 31)), \
+            : ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__)) & 0x3FFFFFFF), \
               (ZTMP(header, __LINE__) = 2))), \
           (ZTMP(s, __LINE__).buffer = (float *) ZTMP(buffer, __LINE__) + ZTMP(header, __LINE__)), \
           (ZTMP(buffer, __LINE__) += ZTMP(header, __LINE__) + ZTMP(s, __LINE__).length), \

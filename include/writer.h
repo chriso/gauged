@@ -17,10 +17,10 @@
  */
 
 typedef struct gauged_writer_hash_node_s {
-    uint32_t namespace_;
     char *key;
     gauged_map_t *map;
     gauged_array_t *array;
+    uint32_t namespace_;
     uint32_t seed;
     struct gauged_writer_hash_node_s *next;
     struct gauged_writer_hash_node_s *array_next;
