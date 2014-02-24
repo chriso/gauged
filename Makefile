@@ -4,12 +4,13 @@ check: build
 check-quick: build
 	@python test.py --quick
 
-clean:
-	@rm -rf gauged/*.pyc gauged/*/*.pyc test/*.pyc \
-		 dist build gauged.egg-info .coverage htmlcov \
-		 test/test test/benchmark test/*.dSYM \
-		 htmlcov .instrumental.cov *.pyc \
-		 *.gcda *.gcno *.gcov MANIFEST
+cclean:
+	@rm -rf test/test test/benchmark test/*.dSYM \
+		 .instrumental.cov *.gcda *.gcno *.gcov
+
+clean: cclean
+	@rm -rf gauged/*.pyc gauged/*/*.pyc test/*.pyc *.pyc \
+		 dist build gauged.egg-info .coverage htmlcov MANIFEST \
 
 coverage: build
 	@command -v coverage >/dev/null || \
@@ -28,7 +29,7 @@ build:
 install:
 	@python setup.py install
 
-ctest_deps:
+ctest_deps: cclean
 	@$(CC) -Iinclude -Itest -O0 -g -std=c99 -pedantic -Wall -Wextra -lm -msse2 \
 		-pthread -fprofile-arcs -ftest-coverage $(CFLAGS) \
 		lib/*.c test/test.c -o test/test
@@ -42,7 +43,7 @@ ccoverage: ctest
 benchmark: build
 	@python benchmark.py
 
-cbenchmark:
+cbenchmark: cclean
 	@$(CC) -Iinclude -Itest -O3 -std=c99 -pedantic -Wall -Wextra -lm -msse2 \
 		-pthread -D_SVID_SOURCE $(CFLAGS) \
 		lib/*.c test/benchmark.c -o test/benchmark \
