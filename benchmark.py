@@ -56,8 +56,8 @@ print 'Writing to %s (block_size=%s, resolution=%s)' % (options['driver'],
 # Get the start and end timestamp
 end = datetime.now()
 start = end - timedelta(days=options['days'])
-start_timestamp = long(timegm(start.timetuple()) * 1000)
-end_timestamp = long(timegm(end.timetuple()) * 1000)
+start_timestamp = timegm(start.timetuple())
+end_timestamp = timegm(end.timetuple())
 
 number = abbreviate_number(options['number'])
 
@@ -73,7 +73,7 @@ with gauged.writer as writer:
     add = writer.add
     for timestamp in xrange(start_timestamp, end_timestamp, span // measurements):
         data[1] = random()
-        add(gauges, timestamp=timestamp)
+        add(gauges, timestamp=timestamp*1000)
 elapsed = time() - start
 
 print 'Wrote %s measurements in %s seconds (%s/s) (rss: %s)' % (number, round(elapsed, 3),
