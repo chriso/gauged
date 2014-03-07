@@ -30,8 +30,12 @@ int main() {
 
     gauged_writer_flush_arrays(writer, 10);
 
-    gauged_writer_emit(writer, 0, "baz", 50);
-    gauged_writer_emit(writer, 1, "baz", 60);
+    uint32_t data_points = 0;
+    gauged_writer_emit_pairs(writer, 0, "baz=50", &data_points);
+    GAUGED_EXPECT("Writer emit pairs tracks data points A", data_points == 1);
+    data_points = 0;
+    gauged_writer_emit_pairs(writer, 1, "baz=60&ignore=me", &data_points);
+    GAUGED_EXPECT("Writer emit pairs tracks data points B", data_points == 1);
     gauged_writer_flush_arrays(writer, 11);
 
     uint32_t expected_maps = 0;
@@ -62,6 +66,8 @@ int main() {
     GAUGED_EXPECT("Pending map count", 3 == expected_maps);
 
     GAUGED_EXPECT("Pending map size before flush", 3 == writer->pending->count);
+    gauged_writer_flush_maps(writer, true);
+    GAUGED_EXPECT("Pending map size after soft flush", 3 == writer->pending->count);
     gauged_writer_flush_maps(writer, false);
     GAUGED_EXPECT("Pending map size after flush", 0 == writer->pending->count);
 
@@ -70,9 +76,42 @@ int main() {
     GAUGED_EXPECT("Parsed key/value pairs from query", 6 == writer->buffer_size);
 
     char *expected[] = { "foo", "bar", "bah", "", "<key>", "==value==%3" };
+    assert(sizeof(expected) / sizeof(expected[0]) == writer->buffer_size);
     for (size_t i = 0; i < writer->buffer_size; i++) {
         GAUGED_EXPECT("Parsed key/value from string", !strcmp(expected[i], writer->buffer[i]));
     }
+
+    gauged_writer_parse_query(writer, "foo+bar=baz\n");
+
+    char *expected_b[] = { "foo bar", "baz" };
+    GAUGED_EXPECT("Parsed key/value pairs from query", 2 == writer->buffer_size);
+    assert(sizeof(expected_b) / sizeof(expected_b[0]) == writer->buffer_size);
+    for (size_t i = 0; i < writer->buffer_size; i++) {
+        GAUGED_EXPECT("Parsed key/value from string", !strcmp(expected_b[i], writer->buffer[i]));
+    }
+
+    gauged_writer_free(writer);
+
+    writer = gauged_writer_new(4);
+
+    char key[2] = { 'A', '\0' };
+    for (char c = 'A'; c <= 'Z'; c++) {
+        key[0] = c;
+        gauged_writer_emit(writer, 0, key, 10);
+    }
+
+    expected_maps = 0;
+    float writer_sum = 0;
+    for (size_t i = 0; i < writer->pending->size; i++) {
+        if (writer->pending->nodes[i]) {
+            node = writer->pending->nodes[i];
+            writer_sum += gauged_map_sum(node->map);
+            expected_maps++;
+        }
+    }
+
+    GAUGED_EXPECT("Count of all maps", expected_maps == 26);
+    GAUGED_EXPECT_FLOAT_EQUALS("Sum of all maps", writer_sum, 260);
 
     gauged_writer_free(writer);
 
@@ -91,13 +130,22 @@ int main() {
     gauged_array_sort(array);
     GAUGED_EXPECT_SORTED("Array sorting (small)", array);
 
+    gauged_array_t *medium = gauged_array_import(NULL, 2000000);
+    assert(medium);
+    for (size_t i = 1000000; i; i--) {
+        gauged_array_append(medium, i);
+    }
+    gauged_array_sort(medium);
+    GAUGED_EXPECT_SORTED("Array sorting (medium)", medium);
+    gauged_array_free(medium);
+
     gauged_array_t *large = gauged_array_import(NULL, 2000000);
     assert(large);
     for (size_t i = 2000000; i; i--) {
         gauged_array_append(large, i);
     }
     gauged_array_sort(large);
-    GAUGED_EXPECT_SORTED("Array sorting (1M+)", large);
+    GAUGED_EXPECT_SORTED("Array sorting (large)", large);
     gauged_array_free(large);
 
     gauged_array_t *array_copy = gauged_array_import(gauged_array_export(array),
@@ -127,9 +175,28 @@ int main() {
     GAUGED_EXPECT_FLOAT_EQUALS("Map copy", gauged_map_sum(map), 225);
     gauged_map_free(map_copy);
 
+    map_copy = gauged_map_new();
+    assert(map_copy);
+    gauged_map_concat(map_copy, map, 12, 20, 0);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map concat A", gauged_map_sum(map_copy), 100);
+    gauged_map_clear(map_copy);
+    gauged_map_concat(map_copy, map, 12, 21, 0);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map concat B", gauged_map_sum(map_copy), 200);
+    gauged_map_free(map_copy);
+
     GAUGED_SUITE("Aggregates");
 
     gauged_map_clear(map);
+
+    GAUGED_EXPECT("Empty map first", isnan(gauged_map_first(map)));
+    GAUGED_EXPECT("Empty map last", isnan(gauged_map_last(map)));
+    GAUGED_EXPECT("Empty map sum", isnan(gauged_map_min(map)));
+    GAUGED_EXPECT("Empty map min", isnan(gauged_map_min(map)));
+    GAUGED_EXPECT("Empty map max", isnan(gauged_map_max(map)));
+    GAUGED_EXPECT("Empty map mean", isnan(gauged_map_mean(map)));
+    GAUGED_EXPECT("Empty map stddev", isnan(gauged_map_stddev(map)));
+    GAUGED_EXPECT_FLOAT_EQUALS("Empty map count", gauged_map_count(map), 0);
+
     gauged_array_clear(array);
     gauged_array_append(array, 0.0);
     gauged_array_append(array, 10.0);
