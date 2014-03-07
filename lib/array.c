@@ -91,15 +91,6 @@ int gauged_array_append(gauged_array_t *array, float value) {
     return GAUGED_OK;
 }
 
-int gauged_array_concat(gauged_array_t *array, const gauged_array_t *append) {
-    if (!gauged_array_resize(array, array->length + append->length)) {
-        return GAUGED_ERROR;
-    }
-    memcpy(array->buffer + array->length, append->buffer, append->length * sizeof(float));
-    array->length += append->length;
-    return GAUGED_OK;
-}
-
 int gauged_array_sort(gauged_array_t *array) {
     if (array->length < 2) {
         return GAUGED_OK;

@@ -68,12 +68,6 @@ gauged_array_t *gauged_array_import(const float *, size_t);
 int gauged_array_append(gauged_array_t *, float);
 
 /**
- * Append an array of floats.
- */
-
-int gauged_array_concat(gauged_array_t *, const gauged_array_t *);
-
-/**
  * Sort the array.
  */
 
