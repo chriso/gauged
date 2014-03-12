@@ -3,7 +3,8 @@ Gauged - https://github.com/chriso/gauged
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 '''
 
-import datetime
+import datetime, random
+from math import ceil, floor, sqrt
 from time import time, sleep
 from warnings import filterwarnings
 from gauged import Gauged, Writer, Config
@@ -574,3 +575,50 @@ class TestGauged(TestCase):
             writer.add('foo', 5, timestamp=now-Gauged.DAY)
         self.assertEqual(gauged.value('foo'), 5)
         self.assertEqual(gauged.value('foo', timestamp=-1.5*Gauged.DAY), 4)
+
+    def test_fuzzy(self, decimal_places=4, max_values=3):
+        def random_values(n, minimum, maximum, decimals):
+            return [ round(random.random() * (maximum - minimum) + minimum, decimals) \
+                for _ in xrange(n) ]
+        def percentile(values, percentile):
+            if not len(values):
+                return float('nan')
+            values = sorted(values)
+            rank = float(len(values) - 1) * percentile / 100
+            nearest_rank = int(floor(rank))
+            result = values[nearest_rank]
+            if (ceil(rank) != nearest_rank):
+                result += (rank - nearest_rank) * (values[nearest_rank + 1] - result)
+            return result
+        def stddev(values):
+            total = len(values)
+            mean = float(sum(values)) / total
+            sum_of_squares = sum((elem - mean) ** 2 for elem in values)
+            return sqrt(float(sum_of_squares) / total)
+        for resolution in (100, 500, 1000):
+            for n in xrange(1, max_values):
+                for end in (1000, 10000):
+                    gauged = Gauged(self.driver, block_size=1000, resolution=resolution)
+                    gauged.driver.clear_schema()
+                    values = random_values(n, -100, 100, 2)
+                    with gauged.writer as writer:
+                        timestamps = sorted(random_values(n, 0, end, 0))
+                        for value, timestamp in zip(values, timestamps):
+                            writer.add('foo', value, timestamp=int(timestamp))
+                    self.assertAlmostEqual(sum(values), gauged.aggregate('foo', Gauged.SUM),
+                        places=decimal_places)
+                    self.assertAlmostEqual(min(values), gauged.aggregate('foo', Gauged.MIN),
+                        places=decimal_places)
+                    self.assertAlmostEqual(max(values), gauged.aggregate('foo', Gauged.MAX),
+                        places=decimal_places)
+                    self.assertAlmostEqual(len(values), gauged.aggregate('foo', Gauged.COUNT),
+                        places=decimal_places)
+                    mean = float(sum(values)) / len(values)
+                    self.assertAlmostEqual(mean, gauged.aggregate('foo', Gauged.MEAN),
+                        places=decimal_places)
+                    self.assertAlmostEqual(stddev(values), gauged.aggregate('foo', Gauged.STDDEV),
+                        places=decimal_places)
+                    self.assertAlmostEqual(percentile(values, 50), gauged.aggregate('foo', Gauged.MEDIAN),
+                        places=decimal_places)
+                    self.assertAlmostEqual(percentile(values, 98), gauged.aggregate('foo',
+                        Gauged.PERCENTILE, percentile=98), places=decimal_places)
