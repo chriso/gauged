@@ -127,8 +127,6 @@ class Context(object):
                 result = min(values) if len(values) else None
             elif aggregate == Aggregate.MAX:
                 result = max(values) if len(values) else None
-            elif aggregate == Aggregate.MEAN:
-                result = sum(values) / len(values) if len(values) else None
             else: # Aggregate.COUNT
                 result = sum(values) if len(values) else 0
             return result

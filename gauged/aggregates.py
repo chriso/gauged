@@ -17,4 +17,4 @@ class Aggregate(object):
 
     ALL = set(( SUM, MIN, MAX, MEAN, STDDEV, PERCENTILE, MEDIAN, COUNT ))
 
-    ASSOCIATIVE = set(( SUM, MIN, MAX, MEAN, COUNT ))
+    ASSOCIATIVE = set(( SUM, MIN, MAX, COUNT ))
