@@ -1,3 +1,9 @@
+---[ 0.3.0 ]
+
+* Fixed a bug with the mean aggregate
+* Improved test coverage
+* Reduced pedantic compiler warnings
+
 ---[ 0.2.1 ]
 
 * Fixed a minor memory leak
