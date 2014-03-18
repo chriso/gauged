@@ -33,7 +33,7 @@ gauged = Gauged('mysql://root@localhost/gauged')
 
 with gauged.writer as writer:
     writer.add({ 'requests': 1, 'response_time': 0.45, 'memory_usage': 145.6 })
-    writer.add({ 'requests': 1, 'response_time': 0.25, 'memory_usage': 148.3 })
+    writer.add({ 'requests': 1, 'response_time': 0.25, 'cpu_usage': 148.3, 'api_requests': 3 })
 ```
 
 Reading
