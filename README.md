@@ -8,7 +8,7 @@ Features:
 
 - Comfortably handle billions of data points on a single node.
 - Support for sparse data (unlike the fixed-size RRDtool).
-- Cache-aware data structures and algorithms for speed and memory-efficiency.
+- Cache-oblivious data structures and algorithms for speed and memory-efficiency.
 - Efficient range queries and roll-ups of any size down to the configurable resolution of 1 second.
 - Use either **MySQL**, **PostgreSQL** or **SQLite** as a backend.
 
