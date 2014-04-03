@@ -31,10 +31,6 @@ class Time(object):
     def __get__(self, instance, owner):
         return long(time() * 1000)
 
-def left_pad(string, length):
-    '''Left pad a string with spaces'''
-    return ' ' * (length - len(string)) + string
-
 def table_repr(columns, rows, data, padding=2):
     '''Generate a table for cli output'''
     padding = ' ' * padding
@@ -46,13 +42,13 @@ def table_repr(columns, rows, data, padding=2):
     max_row_length = max(( len(row) for row in rows )) if len(rows) else 0
     table_row = ' ' * max_row_length
     for i, column in enumerate(columns):
-        table_row += padding + left_pad(column, column_lengths[i])
+        table_row += padding + column.rjust(column_lengths[i])
     table_rows = [ table_row ]
     for row in rows:
-        table_row = left_pad(row, max_row_length)
+        table_row = row.rjust(max_row_length)
         for i, column in enumerate(columns):
             item = str(data[row][column])
-            table_row += padding + left_pad(item, column_lengths[i])
+            table_row += padding + item.rjust(column_lengths[i])
         table_rows.append(table_row)
     return '\n'.join(table_rows)
 
