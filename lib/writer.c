@@ -124,7 +124,7 @@ error:
     return GAUGED_ERROR;
 }
 
-gauged_writer_t *gauged_writer_new(size_t max_key) {
+GAUGED_EXPORT gauged_writer_t *gauged_writer_new(size_t max_key) {
     gauged_writer_t *writer = malloc(sizeof(gauged_writer_t));
     if (!writer) {
         return NULL;
@@ -148,14 +148,14 @@ error:
     return NULL;
 }
 
-void gauged_writer_free(gauged_writer_t *writer) {
+GAUGED_EXPORT void gauged_writer_free(gauged_writer_t *writer) {
     gauged_writer_hash_free(writer->pending);
     free(writer->buffer);
     free(writer->copy);
     free(writer);
 }
 
-int gauged_writer_emit_pairs(gauged_writer_t *writer, uint32_t namespace_,
+GAUGED_EXPORT int gauged_writer_emit_pairs(gauged_writer_t *writer, uint32_t namespace_,
         const char *pairs, uint32_t *data_points) {
     gauged_writer_parse_query(writer, pairs);
     char *key, *value, *end_ptr;
@@ -185,7 +185,7 @@ int gauged_writer_emit_pairs(gauged_writer_t *writer, uint32_t namespace_,
     return GAUGED_OK;
 }
 
-int gauged_writer_emit(gauged_writer_t *writer, uint32_t namespace_, const char *key, float value) {
+GAUGED_EXPORT int gauged_writer_emit(gauged_writer_t *writer, uint32_t namespace_, const char *key, float value) {
     size_t key_len = strlen(key) + 1;
     if (writer->max_key && key_len > writer->max_key) {
         return GAUGED_KEY_OVERFLOW;
@@ -247,7 +247,7 @@ error:
     return GAUGED_ERROR;
 }
 
-int gauged_writer_flush_arrays(gauged_writer_t *writer, uint32_t offset) {
+GAUGED_EXPORT int gauged_writer_flush_arrays(gauged_writer_t *writer, uint32_t offset) {
     gauged_writer_hash_node_t *node, *next;
     gauged_writer_hash_t *hash = writer->pending;
     for (node = hash->array_head; node; node = node->array_next) {
@@ -267,7 +267,7 @@ error:
     return GAUGED_ERROR;
 }
 
-int gauged_writer_flush_maps(gauged_writer_t *writer, bool soft) {
+GAUGED_EXPORT int gauged_writer_flush_maps(gauged_writer_t *writer, bool soft) {
     gauged_writer_hash_node_t *node;
     if (soft) {
         for (node = writer->pending->head; node; node = node->next) {
@@ -310,7 +310,7 @@ static void gauged_writer_url_decode(char *dst, const char *src, size_t len) {
     *dst = '\0';
 }
 
-void gauged_writer_parse_query(gauged_writer_t *writer, const char *query) {
+GAUGED_EXPORT void gauged_writer_parse_query(gauged_writer_t *writer, const char *query) {
     writer->buffer_size = 0;
     if (!query) {
         return;

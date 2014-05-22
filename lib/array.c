@@ -11,7 +11,7 @@
 #include "array.h"
 #include "sort.h"
 
-gauged_array_t *gauged_array_import(const float *buffer, size_t size) {
+GAUGED_EXPORT gauged_array_t *gauged_array_import(const float *buffer, size_t size) {
     gauged_array_t *array = malloc(sizeof(gauged_array_t));
     if (!array) {
         return NULL;
@@ -32,11 +32,11 @@ error:
     return NULL;
 }
 
-gauged_array_t *gauged_array_new() {
+GAUGED_EXPORT gauged_array_t *gauged_array_new() {
     return gauged_array_import(NULL, 0);
 }
 
-gauged_array_t *gauged_array_new_values(size_t length, ...) {
+GAUGED_EXPORT gauged_array_t *gauged_array_new_values(size_t length, ...) {
     gauged_array_t *array = gauged_array_new();
     if (!array) {
         return NULL;
@@ -50,7 +50,7 @@ gauged_array_t *gauged_array_new_values(size_t length, ...) {
     return array;
 }
 
-void gauged_array_free(gauged_array_t *array) {
+GAUGED_EXPORT void gauged_array_free(gauged_array_t *array) {
     free(array->buffer);
     free(array);
 }
@@ -71,19 +71,19 @@ static inline int gauged_array_resize(gauged_array_t *array, size_t size) {
     return GAUGED_OK;
 }
 
-size_t gauged_array_length(const gauged_array_t *array) {
+GAUGED_EXPORT size_t gauged_array_length(const gauged_array_t *array) {
     return array->length * sizeof(float);
 }
 
-float *gauged_array_export(const gauged_array_t *array) {
+GAUGED_EXPORT float *gauged_array_export(const gauged_array_t *array) {
     return array->buffer;
 }
 
-void gauged_array_clear(gauged_array_t *array) {
+GAUGED_EXPORT void gauged_array_clear(gauged_array_t *array) {
     array->length = 0;
 }
 
-int gauged_array_append(gauged_array_t *array, float value) {
+GAUGED_EXPORT int gauged_array_append(gauged_array_t *array, float value) {
     if (!gauged_array_resize(array, array->length + 1)) {
         return GAUGED_ERROR;
     }
@@ -91,7 +91,7 @@ int gauged_array_append(gauged_array_t *array, float value) {
     return GAUGED_OK;
 }
 
-int gauged_array_sort(gauged_array_t *array) {
+GAUGED_EXPORT int gauged_array_sort(gauged_array_t *array) {
     if (array->length < 2) {
         return GAUGED_OK;
     }

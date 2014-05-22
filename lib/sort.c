@@ -9,6 +9,7 @@
 # include <pthread.h>
 #endif
 
+#include "common.h"
 #include "sort.h"
 
 static inline void gauged_sort_insertion(uint32_t *array, uint32_t offset, size_t end) {
@@ -112,7 +113,7 @@ static void *gauged_sort_merge(void *data) {
 }
 #endif
 
-uint32_t *gauged_sort(uint32_t *array, size_t length) {
+GAUGED_EXPORT uint32_t *gauged_sort(uint32_t *array, size_t length) {
     if (length <= GAUGED_SORT_INSERTIONSORT_MAX) {
         gauged_sort_insertion(array, 0, length);
 #if !defined(WIN32) && !defined(_WIN32)

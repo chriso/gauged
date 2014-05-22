@@ -12,6 +12,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "common.h"
 #include "hash.h"
 
 #define PRIME32_1 2654435761U
@@ -25,7 +26,7 @@
 #define XXH_LE32(p) *(unsigned int*)(p)
 #define XXH_rotl32(x, r) ((x << r) | (x >> (32 - r)))
 
-void gauged_hash_init(gauged_xxhash_t *hash) {
+GAUGED_EXPORT void gauged_hash_init(gauged_xxhash_t *hash) {
     hash->seed = GAUGED_HASH_SEED;
     hash->v1 = GAUGED_HASH_SEED + PRIME32_1 + PRIME32_2;
     hash->v2 = GAUGED_HASH_SEED + PRIME32_2;
@@ -35,7 +36,7 @@ void gauged_hash_init(gauged_xxhash_t *hash) {
     hash->memsize = 0;
 }
 
-void gauged_hash_update(gauged_xxhash_t *hash, const char *str, size_t length) {
+GAUGED_EXPORT void gauged_hash_update(gauged_xxhash_t *hash, const char *str, size_t length) {
     const unsigned char* p = (const unsigned char *)str;
     const unsigned char* const bEnd = p + length;
     hash->total_len += length;
@@ -83,7 +84,7 @@ void gauged_hash_update(gauged_xxhash_t *hash, const char *str, size_t length) {
     }
 }
 
-uint32_t gauged_hash_digest(gauged_xxhash_t *hash) {
+GAUGED_EXPORT uint32_t gauged_hash_digest(gauged_xxhash_t *hash) {
     unsigned char *p = (unsigned char *) hash->memory;
     unsigned char *bEnd = (unsigned char *) hash->memory + hash->memsize;
     uint32_t h32;
