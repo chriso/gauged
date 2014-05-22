@@ -5,7 +5,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
+#if !defined(WIN32) && !defined(_WIN32)
+# include <pthread.h>
+#endif
 
 #include "sort.h"
 
@@ -58,6 +60,7 @@ static void gauged_sort_radix(uint32_t *array, uint32_t offset, size_t end, uint
     }
 }
 
+#if !defined(WIN32) && !defined(_WIN32)
 static inline void gauged_sort_merge_buffer(size_t n, uint32_t * restrict out,
         size_t nl, uint32_t * restrict inl,
         size_t nu, uint32_t * restrict inu) {
@@ -107,10 +110,12 @@ static void *gauged_sort_merge(void *data) {
     }
     return NULL;
 }
+#endif
 
 uint32_t *gauged_sort(uint32_t *array, size_t length) {
     if (length <= GAUGED_SORT_INSERTIONSORT_MAX) {
         gauged_sort_insertion(array, 0, length);
+#if !defined(WIN32) && !defined(_WIN32)
     } else if (length <= GAUGED_SORT_RADIXSORT_MAX) {
         gauged_sort_radix(array, 0, length, 24);
     } else {
@@ -127,5 +132,10 @@ uint32_t *gauged_sort(uint32_t *array, size_t length) {
         gauged_sort_merge(&params);
         array = output;
     }
+#else
+    } else {
+        gauged_sort_radix(array, 0, length, 24);
+    }
+#endif
     return array;
 }
