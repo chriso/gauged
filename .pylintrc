@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=C0111, R0923, R0801, W0142, W0212, I0011, bad-whitespace
+disable=C0111, R0923, R0801, W0142, W0212, I0011, C0330, bad-whitespace
 
 # C0111: Missing {class,method,function} docstring
 # R0923: Interface not implemented
@@ -7,6 +7,7 @@ disable=C0111, R0923, R0801, W0142, W0212, I0011, bad-whitespace
 # W0142: Used * or ** magic
 # W0212: Access to a protected member %s of a client class
 # I0011: Locally disabling %s
+# C0330: Wrong continued indentation
 
 [BASIC]
 const-rgx=^[A-Z_][a-zA-Z0-9_]{1,29}$
