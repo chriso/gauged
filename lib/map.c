@@ -42,7 +42,7 @@ GAUGED_EXPORT void gauged_map_free(gauged_map_t *map) {
     free(map);
 }
 
-GAUGED_EXPORT static inline int gauged_map_resize(gauged_map_t *map, size_t size) {
+static inline int gauged_map_resize(gauged_map_t *map, size_t size) {
     size_t new_size = map->size;
     while (new_size < size) {
         new_size *= 2;
