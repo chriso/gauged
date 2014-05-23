@@ -13,12 +13,13 @@ class SharedLibrary(object):
 
     def __init__(self, name, prefix):
         self.prefix = prefix
-        path = os.path.dirname(os.path.realpath(__file__ + '/../'))
+        path = os.path.dirname(os.path.realpath(os.path.join(__file__, '..')))
         version = sys.version.split(' ')[0][0:3]
         basename = name.split('.')[0]
-        lib = glob.glob('%s/build/lib*-%s/%s*.*' % (path, version, basename))
+        shared_lib_glob = os.path.join(path, 'build', 'lib*-' + version, basename + '*.*')
+        lib = glob.glob(shared_lib_glob)
         if not len(lib): # pragma: no cover
-            lib = path + '/' + name
+            lib = os.path.join(path, name)
         else:
             lib = lib[0]
         try:
