@@ -11,6 +11,7 @@ Features:
 - Cache-oblivious data structures and algorithms for speed and memory-efficiency.
 - Efficient range queries and roll-ups of any size down to the configurable resolution of 1 second.
 - Use either **MySQL**, **PostgreSQL** or **SQLite** as a backend.
+- Runs on Mac, Linux & Windows
 
 ## Installation
 
