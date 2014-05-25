@@ -15,18 +15,12 @@ class SharedLibrary(object):
         self.prefix = prefix
         path = os.path.dirname(os.path.realpath(os.path.join(__file__, '..')))
         version = sys.version.split(' ')[0][0:3]
-        basename = name.split('.')[0]
-        shared_lib_glob = os.path.join(path, 'build', 'lib*-' + version, basename + '*.*')
-        lib = glob.glob(shared_lib_glob)
-        if not len(lib): # pragma: no cover
-            lib = os.path.join(path, name)
-        else:
-            lib = lib[0]
+        shared_lib = os.path.join(path, 'build', 'lib*-' + version, name + '*.*')
+        lib = glob.glob(shared_lib)[0]
         try:
-            cdll.LoadLibrary(lib)
+            self.library = cdll.LoadLibrary(lib)
         except OSError as err:
             raise OSError('Failed to load the C extension: ' + str(err))
-        self.library = CDLL(lib)
 
     def prototype(self, name, argtypes, restype=None):
         '''Define argument / return types for the specified C function'''
@@ -83,7 +77,7 @@ Uint32Ptr = POINTER(c_uint32)
 FloatPtr = POINTER(c_float)
 
 # Load the shared library
-Gauged = SharedLibrary('libgauged.so', 'gauged')
+Gauged = SharedLibrary('_gauged', 'gauged')
 
 # Define argument & return types
 Gauged.prototype('array_new', [], ArrayPtr)
