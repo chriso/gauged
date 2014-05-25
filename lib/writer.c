@@ -365,3 +365,6 @@ GAUGED_EXPORT void gauged_writer_parse_query(gauged_writer_t *writer, const char
         }
     }
 }
+
+GAUGED_EXPORT void init_gauged() {
+}
