@@ -1,3 +1,7 @@
+---[ 0.4.0 ]
+
+* Windows support
+
 ---[ 0.3.0 ]
 
 * Fixed a bug with the mean aggregate
