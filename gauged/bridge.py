@@ -41,7 +41,7 @@ class SharedLibrary(object):
 class Array(Structure):
     '''A wrapper for the C type gauged_array_t'''
     _fields_ = [('buffer', POINTER(c_float)), ('size', c_size_t),
-                ('length',c_size_t)]
+                ('length', c_size_t)]
 
 class Map(Structure):
     '''A wrapper for the C type gauged_map_t'''
@@ -52,7 +52,7 @@ class WriterHashNode(Structure):
     '''A wrapper for the C type gauged_writer_hash_node_t'''
 
 WriterHashNode._fields_ = [('key', c_char_p), ('map', POINTER(Map)),
-    ('array', POINTER(Array)),('namespace', c_uint32),
+    ('array', POINTER(Array)), ('namespace', c_uint32),
     ('seed', c_uint32), ('next', POINTER(WriterHashNode))]
 
 class WriterHash(Structure):
