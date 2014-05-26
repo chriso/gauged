@@ -8,7 +8,7 @@ from distutils.core import setup, Extension
 
 cflags = [ '-O3', '-std=c99', '-pedantic', '-Wall', '-Wextra', '-pthread' ]
 
-gauged = Extension('libgauged',
+gauged = Extension('_gauged',
     sources=['lib/%s.c' % src for src in ('array', 'hash', 'sort', 'map', 'writer')],
     include_dirs=['include'],
     extra_compile_args=cflags)

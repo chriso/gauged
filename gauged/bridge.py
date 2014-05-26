@@ -13,19 +13,14 @@ class SharedLibrary(object):
 
     def __init__(self, name, prefix):
         self.prefix = prefix
-        path = os.path.dirname(os.path.realpath(__file__ + '/../'))
+        path = os.path.dirname(os.path.realpath(os.path.join(__file__, '..')))
         version = sys.version.split(' ')[0][0:3]
-        basename = name.split('.')[0]
-        lib = glob.glob('%s/build/lib*-%s/%s*.so' % (path, version, basename))
-        if not len(lib): # pragma: no cover
-            lib = path + '/' + name
-        else:
-            lib = lib[0]
+        shared_lib = os.path.join(path, 'build', 'lib*-' + version, name + '*.*')
+        lib = glob.glob(shared_lib)[0]
         try:
-            cdll.LoadLibrary(lib)
+            self.library = cdll.LoadLibrary(lib)
         except OSError as err:
             raise OSError('Failed to load the C extension: ' + str(err))
-        self.library = CDLL(lib)
 
     def prototype(self, name, argtypes, restype=None):
         '''Define argument / return types for the specified C function'''
@@ -46,7 +41,7 @@ class SharedLibrary(object):
 class Array(Structure):
     '''A wrapper for the C type gauged_array_t'''
     _fields_ = [('buffer', POINTER(c_float)), ('size', c_size_t),
-                ('length',c_size_t)]
+                ('length', c_size_t)]
 
 class Map(Structure):
     '''A wrapper for the C type gauged_map_t'''
@@ -57,7 +52,7 @@ class WriterHashNode(Structure):
     '''A wrapper for the C type gauged_writer_hash_node_t'''
 
 WriterHashNode._fields_ = [('key', c_char_p), ('map', POINTER(Map)),
-    ('array', POINTER(Array)),('namespace', c_uint32),
+    ('array', POINTER(Array)), ('namespace', c_uint32),
     ('seed', c_uint32), ('next', POINTER(WriterHashNode))]
 
 class WriterHash(Structure):
@@ -82,7 +77,7 @@ Uint32Ptr = POINTER(c_uint32)
 FloatPtr = POINTER(c_float)
 
 # Load the shared library
-Gauged = SharedLibrary('libgauged.so', 'gauged')
+Gauged = SharedLibrary('_gauged', 'gauged')
 
 # Define argument & return types
 Gauged.prototype('array_new', [], ArrayPtr)

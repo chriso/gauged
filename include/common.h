@@ -13,4 +13,10 @@
 #define ZTMP(i, line) ZTMP_(i, line)
 #define ZTMP_(a, b) a##b
 
+#if defined(WIN32) || defined(_WIN32)
+# define GAUGED_EXPORT __declspec(dllexport)
+#else
+# define GAUGED_EXPORT
+#endif
+
 #endif
