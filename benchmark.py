@@ -10,7 +10,6 @@ from time import time
 from calendar import timegm
 from datetime import datetime, timedelta
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from resource import getrusage, RUSAGE_SELF
 
 def abbreviate(suffixes, cutoff):
     def abbreviate_(number, decimals=1):
@@ -25,9 +24,6 @@ def abbreviate(suffixes, cutoff):
 
 abbreviate_number = abbreviate([ '', 'K', 'M', 'B' ], 1000)
 abbreviate_bytes = abbreviate([ 'B', 'KB', 'MB', 'GB', 'TB' ], 1024)
-
-def peak_rss():
-    return abbreviate_bytes(getrusage(RUSAGE_SELF)[2])
 
 # Parse CLI options
 benchmark = ArgumentParser(usage='%(prog)s [OPTIONS]',
@@ -76,8 +72,8 @@ with gauged.writer as writer:
         add(gauges, timestamp=timestamp*1000)
 elapsed = time() - start
 
-print 'Wrote %s measurements in %s seconds (%s/s) (rss: %s)' % (number, round(elapsed, 3),
-    abbreviate_number(measurements / elapsed), peak_rss())
+print 'Wrote %s measurements in %s seconds (%s/s)' % (number, round(elapsed, 3),
+    abbreviate_number(measurements / elapsed))
 
 statistics = gauged.statistics()
 byte_count = statistics.byte_count
@@ -89,5 +85,5 @@ for aggregate in ( 'min', 'max', 'sum', 'count', 'mean', 'stddev', 'median' ):
     start = time()
     gauged.aggregate('foobar', aggregate)
     elapsed = time() - start
-    print '%s() in %ss (read %s measurements/s) (rss: %s)' % (aggregate,
-        round(elapsed, 3), abbreviate_number(measurements / elapsed), peak_rss())
+    print '%s() in %ss (read %s measurements/s)' % (aggregate,
+        round(elapsed, 3), abbreviate_number(measurements / elapsed))
