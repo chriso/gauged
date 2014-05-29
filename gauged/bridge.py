@@ -16,9 +16,11 @@ class SharedLibrary(object):
         path = os.path.dirname(os.path.realpath(os.path.join(__file__, '..')))
         version = sys.version.split(' ')[0][0:3]
         shared_lib = os.path.join(path, 'build', 'lib*-' + version, name + '*.*')
-        lib = glob.glob(shared_lib)[0]
+        lib = glob.glob(shared_lib)
+        if not lib:
+            lib = glob.glob(os.path.join(path, name + '*.*'))
         try:
-            self.library = cdll.LoadLibrary(lib)
+            self.library = cdll.LoadLibrary(lib[0])
         except OSError as err:
             raise OSError('Failed to load the C extension: ' + str(err))
 
