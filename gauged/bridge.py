@@ -17,7 +17,7 @@ class SharedLibrary(object):
         version = sys.version.split(' ')[0][0:3]
         shared_lib = os.path.join(path, 'build', 'lib*-' + version, name + '*.*')
         lib = glob.glob(shared_lib)
-        if not lib:
+        if not lib: # pragma: no cover
             lib = glob.glob(os.path.join(path, name + '*.*'))
         try:
             self.library = cdll.LoadLibrary(lib[0])
