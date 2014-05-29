@@ -1,3 +1,7 @@
+---[ 0.4.1 ]
+
+* Fix linux builds when installed via pip
+
 ---[ 0.4.0 ]
 
 * Windows support
