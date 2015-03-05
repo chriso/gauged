@@ -97,10 +97,10 @@ class TestDriver(TestCase):
     def test_cache(self):
         id_ = sha1('foobar').digest()
         self.assertSequenceEqual(self.driver.get_cache(0, id_, 2, 3, 4), ())
-        self.driver.add_cache(0, id_, 2, [(3, 4), (4, 6)])
+        self.driver.add_cache(0, 9, id_, 2, [(3, 4), (4, 6)])
         self.assertSequenceEqual(self.driver.get_cache(0, id_, 2, 3, 4),
             ((3, 4), (4, 6)))
-        self.driver.add_cache(1, id_, 2, [(3, 4)])
+        self.driver.add_cache(1, 9, id_, 2, [(3, 4)])
         self.assertSequenceEqual(self.driver.get_cache(1, id_, 2, 3, 4), ((3, 4),))
         self.driver.remove_cache(0)
         self.assertSequenceEqual(self.driver.get_cache(0, id_, 2, 3, 4), ())
@@ -139,7 +139,7 @@ class TestDriver(TestCase):
                   ( 1,  2, 3, 'bar', 0x10 )]
         self.driver.replace_blocks(blocks)
         id_ = sha1('foobar').digest()
-        self.driver.add_cache(0, id_, 5, [(13, 4), (15, 4), (18, 4), (23, 6)])
+        self.driver.add_cache(0, 9, id_, 5, [(13, 4), (15, 4), (18, 4), (23, 6)])
         self.driver.set_writer_position('foo', 18)
         self.driver.set_writer_position('bar', 22)
         self.driver.clear_from(2, 20)

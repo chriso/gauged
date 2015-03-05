@@ -225,7 +225,7 @@ class Context(object):
                 if cache_until_timestamp >= end and start not in cached:
                     to_cache.append(( start, value ))
             if len(to_cache):
-                driver.add_cache(namespace, cache_key, interval, to_cache)
+                driver.add_cache(namespace, key, cache_key, interval, to_cache)
         return TimeSeries(( (start, value) for start, _, value in values \
             if value is not None ))
 
@@ -264,7 +264,7 @@ class Context(object):
                 if cache_until_timestamp >= end and start not in cached:
                     to_cache.append(( start, result ))
             if len(to_cache):
-                driver.add_cache(namespace, cache_key, interval, to_cache)
+                driver.add_cache(namespace, key, cache_key, interval, to_cache)
         return TimeSeries(( (start, value) for start, _, value in values ))
 
     def block_iterator(self, key, start, end, yield_if_empty=False):

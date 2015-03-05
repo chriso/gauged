@@ -194,6 +194,34 @@ class PostgreSQLDriver(DriverInterface):
         execute('''UPDATE gauged_writer_history SET timestamp = %s
             WHERE timestamp > %s''', (timestamp, timestamp))
 
+    def clear_key_before(self, key, namespace, timestamp=None):
+        namespace_key = (namespace, key)
+        translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
+        execute = self.cursor.execute
+        if timestamp is not None:
+            params = (translated_key, namespace, timestamp)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s AND "offset" <= %s''', params)
+            execute('''DELETE FROM gauged_cache WHERE key = %s AND namespace = %s AND start + length <= %s''', params)
+        else:
+            params = (translated_key, namespace)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s''', params)
+            execute('''DELETE FROM gauged_keys WHERE key = %s AND namespace = %s''', params)
+            self.remove_cache(namespace, translated_key)
+
+    def clear_key_after(self, key, namespace, timestamp=None):
+        namespace_key = (namespace, key)
+        translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
+        execute = self.cursor.execute
+        if timestamp is not None:
+            params = (translated_key, namespace, timestamp)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s AND "offset" >= %s''', params)
+            execute('''DELETE FROM gauged_cache WHERE key = %s AND namespace = %s AND start + length >= %s''', params)
+        else:
+            params = (translated_key, namespace)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s''', params)
+            execute('''DELETE FROM gauged_keys WHERE key = %s AND namespace = %s''', params)
+            self.remove_cache(namespace, translated_key)
+
     def get_cache(self, namespace, query_hash, length, start, end):
         '''Get a cached value for the specified date range and query'''
         query_hash = self.psycopg2.Binary(query_hash)
@@ -203,29 +231,33 @@ class PostgreSQLDriver(DriverInterface):
             (namespace, query_hash, length, start, end))
         return cursor.fetchall()
 
-    def add_cache(self, namespace, query_hash, length, cache):
+    def add_cache(self, namespace, key, query_hash, length, cache):
         '''Add cached values for the specified date range and query'''
         start = 0
         bulk_insert = self.bulk_insert
         cache_len = len(cache)
-        row = '(%s,%s,%s,%s,%s)'
+        row = '(%s,%s,%s,%s,%s,%s)'
         query = '''INSERT INTO gauged_cache
-            (namespace, "hash", length, start, value) VALUES '''
+            (namespace, key, "hash", length, start, value) VALUES '''
         execute = self.cursor.execute
         query_hash = self.psycopg2.Binary(query_hash)
         while start < cache_len:
             rows = cache[start:start+bulk_insert]
             params = []
             for timestamp, value in rows:
-                params.extend(( namespace, query_hash, length, timestamp, value ))
+                params.extend(( namespace, key, query_hash, length, timestamp, value ))
             insert = (row + ',') * (len(rows) - 1) + row
             execute(query + insert, params)
             start += bulk_insert
         self.db.commit()
 
-    def remove_cache(self, namespace):
-        '''Remove all cached values for the specified namespace'''
-        self.cursor.execute('DELETE FROM gauged_cache WHERE namespace = %s', (namespace,))
+    def remove_cache(self, namespace, key=None):
+        '''Remove all cached values for the specified namespace,
+        optionally specifying a key'''
+        if key is None:
+            self.cursor.execute('DELETE FROM gauged_cache WHERE namespace = %s', (namespace,))
+        else:
+            self.cursor.execute('DELETE FROM gauged_cache WHERE namespace = %s AND key = %s', (namespace, key))
 
     def commit(self):
         '''Commit the current transaction'''
@@ -262,6 +294,7 @@ class PostgreSQLDriver(DriverInterface):
                 timestamp bigint NOT NULL);
             CREATE TABLE IF NOT EXISTS gauged_cache (
                 namespace integer NOT NULL,
+                key bigint NOT NULL,
                 "hash" bytea NOT NULL,
                 length bigint NOT NULL,
                 start bigint NOT NULL,
