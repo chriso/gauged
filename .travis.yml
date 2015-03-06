@@ -16,4 +16,4 @@ before_script:
 script: make check
 matrix:
   allow_failures:
-    - "pypy"
+    - "python": "pypy"
