@@ -565,6 +565,8 @@ class TestGauged(TestCase):
         # every value after 20000 stays the same
         self.assertEqual(gauged.value('foo', timestamp=30000), 3)
         self.assertEqual(gauged.value('bar', timestamp=30000), 3)
+        # 'foo' value on 20000 is cleared
+        self.assertEqual(gauged.value('foo', timestamp=20000), None)
         # 'foo' value before 20000 is cleared
         self.assertEqual(gauged.value('foo', timestamp=10000), None)
         # 'bar' stays there
@@ -601,8 +603,10 @@ class TestGauged(TestCase):
         # every value before 20000 stays the same
         self.assertEqual(gauged.value('foo', timestamp=10000), 1)
         self.assertEqual(gauged.value('bar', timestamp=10000), 1)
+        # 'foo' value on 20000 is cleared
+        self.assertEqual(gauged.aggregate('foo', Gauged.COUNT, start=19000, end=21000), 0)
         # 'foo' value after 20000 is cleared
-        self.assertEqual(gauged.aggregate('foo', Gauged.COUNT, start=30000, end=40000), 0)
+        self.assertEqual(gauged.aggregate('foo', Gauged.COUNT, start=20000, end=40000), 0)
         # 'bar' stays there
         self.assertEqual(gauged.value('bar', timestamp=10000), 1)
 

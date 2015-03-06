@@ -14,3 +14,6 @@ before_script:
   - mysql -e 'create database gauged;'
   - psql -c 'create database gauged;' -U postgres
 script: make check
+matrix:
+  allow_failures:
+    - "pypy"
