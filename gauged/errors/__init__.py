@@ -40,3 +40,6 @@ class GaugedBlockSizeMismatch(RuntimeWarning):
 
 class GaugedSchemaError(GaugedError):
     '''Occurs when an operation is attempted and no schema can be found'''
+
+class GaugedMigrationError(GaugedError):
+    '''Occurs when migration logic fails'''

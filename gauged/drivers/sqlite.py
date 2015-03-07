@@ -3,7 +3,7 @@ Gauged
 https://github.com/chriso/gauged (MIT Licensed)
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 '''
-
+from collections import OrderedDict
 from .interface import DriverInterface
 
 class SQLiteDriver(DriverInterface):
@@ -256,6 +256,25 @@ class SQLiteDriver(DriverInterface):
         '''Commit the current transaction'''
         self.db.commit()
 
+    def add_namespace_statistics(self, namespace, offset, data_points, byte_count):
+        '''Update namespace statistics for the period identified by
+        offset'''
+        execute = self.cursor.execute
+        execute('''INSERT OR IGNORE INTO gauged_statistics
+            VALUES (?, ?, 0, 0)''', ( namespace, offset ))
+        execute('''UPDATE gauged_statistics SET data_points = data_points + ?,
+            byte_count = byte_count + ? WHERE namespace = ? AND offset = ?''',
+            ( data_points, byte_count, namespace, offset ))
+
+    def get_namespace_statistics(self, namespace, start_offset, end_offset):
+        '''Get namespace statistics for the period between start_offset and
+        end_offset (inclusive)'''
+        cursor = self.cursor
+        cursor.execute('''SELECT SUM(data_points), SUM(byte_count)
+            FROM gauged_statistics WHERE namespace = ? AND offset
+            BETWEEN ? AND ?''', (namespace, start_offset, end_offset))
+        return [ long(count or 0) for count in cursor.fetchone() ]
+
     def create_schema(self):
         '''Create all necessary tables'''
         self.cursor.executescript('''
@@ -316,21 +335,18 @@ class SQLiteDriver(DriverInterface):
             DROP TABLE IF EXISTS gauged_metadata''')
         self.db.commit()
 
-    def add_namespace_statistics(self, namespace, offset, data_points, byte_count):
-        '''Update namespace statistics for the period identified by
-        offset'''
-        execute = self.cursor.execute
-        execute('''INSERT OR IGNORE INTO gauged_statistics
-            VALUES (?, ?, 0, 0)''', ( namespace, offset ))
-        execute('''UPDATE gauged_statistics SET data_points = data_points + ?,
-            byte_count = byte_count + ? WHERE namespace = ? AND offset = ?''',
-            ( data_points, byte_count, namespace, offset ))
-
-    def get_namespace_statistics(self, namespace, start_offset, end_offset):
-        '''Get namespace statistics for the period between start_offset and
-        end_offset (inclusive)'''
-        cursor = self.cursor
-        cursor.execute('''SELECT SUM(data_points), SUM(byte_count)
-            FROM gauged_statistics WHERE namespace = ? AND offset
-            BETWEEN ? AND ?''', (namespace, start_offset, end_offset))
-        return [ long(count or 0) for count in cursor.fetchone() ]
+    def prepare_migrations(self):
+        migrations = OrderedDict()
+        migrations['0.4.1'] = ''
+        migrations['0.4.2'] = '''
+        DROP TABLE IF EXISTS gauged_cache;
+        CREATE TABLE IF NOT EXISTS gauged_cache (
+                namespace UNSIGNED INT NOT NULL,
+                `key` INTEGER NOT NULL,
+                hash CHAR(20) NOT NULL,
+                length UNSIGNED BIGINT NOT NULL,
+                start UNSIGNED BIGINT NOT NULL,
+                value FLOAT,
+                PRIMARY KEY (namespace, hash, length, start));
+        '''
+        return migrations

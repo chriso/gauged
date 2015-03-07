@@ -14,7 +14,7 @@ from .utilities import Time
 from .aggregates import Aggregate
 from .config import Config
 from .errors import (GaugedVersionMismatchError, GaugedBlockSizeMismatch,
-    GaugedSchemaError)
+    GaugedSchemaError, GaugedMigrationError)
 from .version import __version__
 
 class Gauged(object):
@@ -123,10 +123,14 @@ class Gauged(object):
             metadata = {}
         return metadata
 
-    def migrate(self):
+    def migrate(self, debug=False):
         '''Migrate an old Gauged schema to the current version. This is
         just a placeholder for now'''
-        self.driver.set_metadata({ 'current_version': Gauged.VERSION })
+        rtn = self.driver.migrate(Gauged.VERSION, debug=debug)
+        if rtn:
+            msg = "Couldn't migrate schema\n"
+            msg += rtn
+            raise GaugedMigrationError(msg)
 
     def make_context(self, **kwargs):
         '''Create a new context for reading data'''
