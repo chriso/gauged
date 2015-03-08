@@ -352,7 +352,7 @@ class TestGauged(TestCase):
         with self.assertRaises(GaugedVersionMismatchError):
             with gauged.writer:
                 pass
-        gauged.migrate()
+        #gauged.migrate()
 
     def test_accepting_data_as_string(self):
         gauged = Gauged(self.driver, resolution=1000, block_size=10000,

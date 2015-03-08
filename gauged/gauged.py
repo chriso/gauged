@@ -123,15 +123,6 @@ class Gauged(object):
             metadata = {}
         return metadata
 
-    def migrate(self, debug=False):
-        '''Migrate an old Gauged schema to the current version. This is
-        just a placeholder for now'''
-        rtn = self.driver.migrate(Gauged.VERSION, debug=debug)
-        if rtn:
-            msg = "Couldn't migrate schema\n"
-            msg += rtn
-            raise GaugedMigrationError(msg)
-
     def make_context(self, **kwargs):
         '''Create a new context for reading data'''
         self.check_schema()
@@ -147,7 +138,7 @@ class Gauged(object):
             raise GaugedSchemaError('Gauged schema not found, try a gauged.sync()')
         if metadata['current_version'] != Gauged.VERSION:
             msg = 'The schema is version %s while this Gauged is version %s. '
-            msg += 'Try upgrading Gauged and/or running gauged.migrate()'
+            msg += 'Try upgrading Gauged and/or running gauged_migrate.py'
             msg = msg % (metadata['current_version'], Gauged.VERSION)
             raise GaugedVersionMismatchError(msg)
         expected_block_size = '%s/%s' % (config.block_size, config.resolution)

@@ -6,8 +6,8 @@ Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 from collections import OrderedDict
 from .interface import DriverInterface
 
-class SQLiteDriver(DriverInterface):
 
+class SQLiteDriver(DriverInterface):
 
     MAX_KEY = 255
 
@@ -338,8 +338,8 @@ class SQLiteDriver(DriverInterface):
     def prepare_migrations(self):
         migrations = OrderedDict()
         migrations['0.4.1'] = ''
-        migrations['0.4.2'] = '''
-        DROP TABLE IF EXISTS gauged_cache;
+        migrations['1.0.0'] = ['''
+        DROP TABLE IF EXISTS gauged_cache;''', '''
         CREATE TABLE IF NOT EXISTS gauged_cache (
                 namespace UNSIGNED INT NOT NULL,
                 `key` INTEGER NOT NULL,
@@ -348,5 +348,5 @@ class SQLiteDriver(DriverInterface):
                 start UNSIGNED BIGINT NOT NULL,
                 value FLOAT,
                 PRIMARY KEY (namespace, hash, length, start));
-        '''
+        ''']
         return migrations
