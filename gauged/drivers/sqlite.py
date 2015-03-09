@@ -263,7 +263,7 @@ class SQLiteDriver(DriverInterface):
         execute('''INSERT OR IGNORE INTO gauged_statistics
             VALUES (?, ?, 0, 0)''', ( namespace, offset ))
         execute('''UPDATE gauged_statistics SET data_points = data_points + ?,
-            byte_count = byte_count + ? WHERE namespace = ? AND offset = ?''',
+           byte_count = byte_count + ? WHERE namespace = ? AND offset = ?''',
             ( data_points, byte_count, namespace, offset ))
 
     def get_namespace_statistics(self, namespace, start_offset, end_offset):
@@ -339,7 +339,7 @@ class SQLiteDriver(DriverInterface):
         migrations = OrderedDict()
         migrations['0.4.1'] = ''
         migrations['1.0.0'] = ['''
-        DROP TABLE IF EXISTS gauged_cache;''', '''
+        DROP TABLE IF EXISTS gauged_cache''', '''
         CREATE TABLE IF NOT EXISTS gauged_cache (
                 namespace UNSIGNED INT NOT NULL,
                 `key` INTEGER NOT NULL,
@@ -347,6 +347,6 @@ class SQLiteDriver(DriverInterface):
                 length UNSIGNED BIGINT NOT NULL,
                 start UNSIGNED BIGINT NOT NULL,
                 value FLOAT,
-                PRIMARY KEY (namespace, hash, length, start));
+                PRIMARY KEY (namespace, hash, length, start))
         ''']
         return migrations

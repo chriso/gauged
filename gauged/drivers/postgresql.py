@@ -3,8 +3,9 @@ Gauged
 https://github.com/chriso/gauged (MIT Licensed)
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 '''
-
+from collections import OrderedDict
 from .interface import DriverInterface
+
 
 class PostgreSQLDriver(DriverInterface):
     '''A PostgreSQL driver for gauged'''
@@ -263,6 +264,26 @@ class PostgreSQLDriver(DriverInterface):
         '''Commit the current transaction'''
         self.db.commit()
 
+    def add_namespace_statistics(self, namespace, offset, data_points, byte_count):
+        '''Update namespace statistics for the period identified by
+        offset'''
+        query = '''UPDATE gauged_statistics SET data_points = data_points + %s,
+            byte_count = byte_count + %s WHERE namespace = %s AND "offset" = %s;
+            INSERT INTO gauged_statistics SELECT %s, %s, %s, %s WHERE NOT EXISTS (
+            SELECT 1 FROM gauged_statistics WHERE namespace = %s AND "offset" = %s)'''
+        self.cursor.execute(query, (data_points, byte_count, namespace,
+            offset, namespace, offset, data_points, byte_count, namespace, offset))
+
+    def get_namespace_statistics(self, namespace, start_offset, end_offset):
+        '''Get namespace statistics for the period between start_offset and
+        end_offset (inclusive)'''
+        cursor = self.cursor
+        cursor.execute('''SELECT SUM(data_points), SUM(byte_count)
+            FROM gauged_statistics WHERE namespace = %s AND "offset"
+            BETWEEN %s AND %s''', (namespace, start_offset, end_offset))
+        return [ long(count or 0) for count in cursor.fetchone() ]
+
+
     def create_schema(self):
         '''Create all necessary tables'''
         execute = self.cursor.execute
@@ -344,21 +365,11 @@ class PostgreSQLDriver(DriverInterface):
         except self.psycopg2.InternalError: # pragma: no cover
             self.db.rollback()
 
-    def add_namespace_statistics(self, namespace, offset, data_points, byte_count):
-        '''Update namespace statistics for the period identified by
-        offset'''
-        query = '''UPDATE gauged_statistics SET data_points = data_points + %s,
-            byte_count = byte_count + %s WHERE namespace = %s AND "offset" = %s;
-            INSERT INTO gauged_statistics SELECT %s, %s, %s, %s WHERE NOT EXISTS (
-            SELECT 1 FROM gauged_statistics WHERE namespace = %s AND "offset" = %s)'''
-        self.cursor.execute(query, (data_points, byte_count, namespace,
-            offset, namespace, offset, data_points, byte_count, namespace, offset))
-
-    def get_namespace_statistics(self, namespace, start_offset, end_offset):
-        '''Get namespace statistics for the period between start_offset and
-        end_offset (inclusive)'''
-        cursor = self.cursor
-        cursor.execute('''SELECT SUM(data_points), SUM(byte_count)
-            FROM gauged_statistics WHERE namespace = %s AND "offset"
-            BETWEEN %s AND %s''', (namespace, start_offset, end_offset))
-        return [ long(count or 0) for count in cursor.fetchone() ]
+    def prepare_migrations(self):
+        migrations = OrderedDict()
+        migrations['0.4.1'] = ''
+        migrations['1.0.0'] = ['''
+        TRUNCATE gauged_cache''', '''
+        ALTER TABLE gauged_cache ADD COLUMN key bigint NOT NULL
+        ''']
+        return migrations
