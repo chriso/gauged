@@ -66,10 +66,10 @@ class DriverInterface(object):
     def clear_from(self, offset, timestamp):
         raise NotImplementedError
 
-    def clear_key_after(self, key, namespace, timestamp):
+    def clear_key_after(self, key, namespace, offset, timestamp):
         raise NotImplementedError
 
-    def clear_key_before(self, key, namespace, timestamp):
+    def clear_key_before(self, key, namespace, offset, timestamp):
         raise NotImplementedError
 
     def get_cache(self, namespace, query_hash, length, start, end):

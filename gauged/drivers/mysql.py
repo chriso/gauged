@@ -198,26 +198,28 @@ class MySQLDriver(DriverInterface):
         execute('''UPDATE gauged_writer_history SET timestamp = %s
             WHERE timestamp > %s''', (timestamp, timestamp))
 
-    def clear_key_before(self, key, namespace, timestamp=None):
+    def clear_key_before(self, key, namespace, offset=None, timestamp=None):
         namespace_key = (namespace, key)
         translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
         execute = self.cursor.execute
         if timestamp is not None:
-            params = (translated_key, namespace, timestamp)
+            params = (translated_key, namespace, offset)
             execute('''DELETE FROM gauged_data WHERE `key` = %s AND namespace = %s AND offset <= %s''', params)
+            params = (translated_key, namespace, timestamp)
             execute('''DELETE FROM gauged_cache WHERE `key` = %s AND namespace = %s AND start + length <= %s''', params)
         else:
             params = (translated_key, namespace)
             execute('''DELETE FROM gauged_data WHERE `key` = %s AND namespace = %s''', params)
+            params = (translated_key, namespace, timestamp)
             execute('''DELETE FROM gauged_keys WHERE `key` = %s AND namespace = %s''', params)
             self.remove_cache(namespace, translated_key)
 
-    def clear_key_after(self, key, namespace, timestamp=None):
+    def clear_key_after(self, key, namespace, offset=None, timestamp=None):
         namespace_key = (namespace, key)
         translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
         execute = self.cursor.execute
         if timestamp is not None:
-            params = (translated_key, namespace, timestamp)
+            params = (translated_key, namespace, offset)
             execute('''DELETE FROM gauged_data WHERE `key` = %s AND namespace = %s AND offset >= %s''', params)
             execute('''DELETE FROM gauged_cache WHERE `key` = %s AND namespace = %s AND start + length >= %s''', params)
         else:

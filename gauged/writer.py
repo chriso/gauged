@@ -185,7 +185,7 @@ class Writer(object):
             offset, remainder = divmod(timestamp, block_size)
             if remainder:
                 raise ValueError('timestamp must be on a block boundary')
-            self.driver.clear_key_before(key, namespace, offset)
+            self.driver.clear_key_before(key, namespace, offset, timestamp)
         else:
             self.driver.clear_key_before(key, namespace)
 
@@ -199,7 +199,7 @@ class Writer(object):
             offset, remainder = divmod(timestamp, block_size)
             if remainder:
                 raise ValueError('timestamp must be on a block boundary')
-            self.driver.clear_key_after(key, namespace, offset)
+            self.driver.clear_key_after(key, namespace, offset, timestamp)
         else:
             self.driver.clear_key_after(key, namespace)
 

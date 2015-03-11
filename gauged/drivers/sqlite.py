@@ -189,13 +189,14 @@ class SQLiteDriver(DriverInterface):
         execute('''UPDATE gauged_writer_history SET timestamp = ?
             WHERE timestamp > ?''', (timestamp, timestamp))
 
-    def clear_key_before(self, key, namespace, timestamp=None):
+    def clear_key_before(self, key, namespace, offset=None, timestamp=None):
         namespace_key = (namespace, key)
         translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
         execute = self.cursor.execute
         if timestamp is not None:
+            params = (translated_key, namespace, offset)
+            execute('''DELETE FROM gauged_data WHERE `key` = ? AND namespace = ? AND offset <= ?''', (params))
             params = (translated_key, namespace, timestamp)
-            execute('''DELETE FROM gauged_data WHERE `key` = ? AND namespace = ? AND offset <= ?''', params)
             execute('''DELETE FROM gauged_cache WHERE `key` = ? AND namespace = ? AND start + length <= ?''', params)
         else:
             params = (translated_key, namespace)
@@ -203,13 +204,14 @@ class SQLiteDriver(DriverInterface):
             execute('''DELETE FROM gauged_keys WHERE `key` = ? AND namespace = ?''', params)
             self.remove_cache(namespace, translated_key)
 
-    def clear_key_after(self, key, namespace, timestamp=None):
+    def clear_key_after(self, key, namespace, offset=None, timestamp=None):
         namespace_key = (namespace, key)
         translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
         execute = self.cursor.execute
         if timestamp is not None:
-            params = (translated_key, namespace, timestamp)
+            params = (translated_key, namespace, offset)
             execute('''DELETE FROM gauged_data WHERE `key` = ? AND namespace = ? AND offset >= ?''', params)
+            params = (translated_key, namespace, timestamp)
             execute('''DELETE FROM gauged_cache WHERE `key` = ? AND namespace = ? AND start + length >= ?''', params)
         else:
             params = (translated_key, namespace)
