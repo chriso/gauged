@@ -559,6 +559,11 @@ class TestGauged(TestCase):
             writer.add({'foo': 2.9, 'bar': 2.9}, timestamp=29999)
             writer.add({'foo': 3, 'bar': 3}, timestamp=30000)
             writer.add({'foo': 4, 'bar': 4}, timestamp=40000, namespace=1)
+        # timestamp should be on a block boundary
+        with gauged.writer as writer:
+            with self.assertRaises(ValueError):
+                writer.clear_key_before('foo', timestamp=15000)
+
         self.assertEqual(gauged.value('foo', timestamp=40000), 3)
         self.assertEqual(gauged.value('bar', timestamp=40000), 3)
         self.assertEqual(gauged.value('foo', timestamp=40000, namespace=1), 4)
@@ -602,6 +607,10 @@ class TestGauged(TestCase):
         self.assertEqual(gauged.value('bar', timestamp=40000), 3)
         self.assertEqual(gauged.value('foo', timestamp=40000, namespace=1), 4)
         self.assertEqual(gauged.value('bar', timestamp=40000, namespace=1), 4)
+        # timestamp should be on a block boundary
+        with gauged.writer as writer:
+            with self.assertRaises(ValueError):
+                writer.clear_key_after('foo', timestamp=15000)
         with gauged.writer as writer:
             writer.clear_key_after('foo', timestamp=20000)
         # every value before 20000 stays the same

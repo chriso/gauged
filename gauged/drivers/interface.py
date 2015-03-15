@@ -78,7 +78,7 @@ class DriverInterface(object):
     def add_cache(self, namespace, key, query_hash, length, cache):
         pass
 
-    def remove_cache(self, namespace, key):
+    def remove_cache(self, namespace, key=None):
         pass
 
     def add_namespace_statistics(self, namespace, offset,

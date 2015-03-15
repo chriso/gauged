@@ -186,7 +186,8 @@ class Writer(object):
             if remainder:
                 raise ValueError('timestamp must be on a block boundary')
             if offset > 0:
-                offset -= 1
+                raise ValueError('cannot delete before offset zero')
+            offset -= 1
             self.driver.clear_key_before(key, namespace, offset, timestamp)
         else:
             self.driver.clear_key_before(key, namespace)
