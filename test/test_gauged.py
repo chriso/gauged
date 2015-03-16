@@ -352,7 +352,7 @@ class TestGauged(TestCase):
         with self.assertRaises(GaugedVersionMismatchError):
             with gauged.writer:
                 pass
-        gauged.migrate()
+        #gauged.migrate()
 
     def test_accepting_data_as_string(self):
         gauged = Gauged(self.driver, resolution=1000, block_size=10000,
@@ -548,6 +548,95 @@ class TestGauged(TestCase):
             writer.add('foo', 6, timestamp=30000, namespace=1)
         self.assertEqual(gauged.value('foo', timestamp=40000), 5)
         self.assertEqual(gauged.value('foo', timestamp=40000, namespace=1), 6)
+
+    def test_clear_key_before(self):
+        gauged = Gauged(self.driver, resolution=1000, block_size=10000)
+        with gauged.writer as writer:
+            writer.add({'foo': 1, 'bar': 1}, timestamp=10000)
+            writer.add({'foo': 1.5, 'bar': 1.5}, timestamp=15000)
+            writer.add({'foo': 2, 'bar': 2}, timestamp=20000)
+            writer.add({'foo': 2.5, 'bar': 2.5}, timestamp=25000)
+            writer.add({'foo': 2.9, 'bar': 2.9}, timestamp=29999)
+            writer.add({'foo': 3, 'bar': 3}, timestamp=30000)
+            writer.add({'foo': 4, 'bar': 4}, timestamp=40000, namespace=1)
+        # timestamp should be on a block boundary
+        with gauged.writer as writer:
+            with self.assertRaises(ValueError):
+                writer.clear_key_before('foo', timestamp=15000)
+
+        self.assertEqual(gauged.value('foo', timestamp=40000), 3)
+        self.assertEqual(gauged.value('bar', timestamp=40000), 3)
+        self.assertEqual(gauged.value('foo', timestamp=40000, namespace=1), 4)
+        self.assertEqual(gauged.value('bar', timestamp=40000, namespace=1), 4)
+        with gauged.writer as writer:
+            writer.clear_key_before('foo', timestamp=20000)
+        # every value >= 20000 stays the same
+        self.assertEqual(gauged.value('foo', timestamp=20000), 2)
+        self.assertAlmostEqual(gauged.value('foo', timestamp=25000), 2.5, places=5)
+        self.assertAlmostEqual(gauged.value('foo', timestamp=29000), 2.9, places=5)
+        self.assertEqual(gauged.value('foo', timestamp=30000), 3)
+        self.assertEqual(gauged.value('bar', timestamp=30000), 3)
+        # 'foo' values < 20000 are cleared
+        self.assertEqual(gauged.value('foo', timestamp=15000), None)
+        self.assertEqual(gauged.value('foo', timestamp=10000), None)
+        # 'bar' stays there
+        self.assertEqual(gauged.value('bar', timestamp=10000), 1)
+        with gauged.writer as writer:
+            writer.add({'foo': 5, 'bar': 5}, timestamp=50000)
+            writer.add({'foo': 5, 'bar': 5}, timestamp=50000, namespace=1)
+            writer.add({'foo': 6, 'bar': 6}, timestamp=60000)
+            writer.add({'foo': 6, 'bar': 6}, timestamp=60000, namespace=1)
+        with gauged.writer as writer:
+            writer.clear_key_before('foo', namespace=1, timestamp=60000)
+        # 'foo' in namespace 0 is untouched before 60000
+        self.assertEqual(gauged.value('foo', timestamp=50000), 5)
+        # 'foo' in namespace 1 is correctly cleared
+        self.assertEqual(gauged.value('foo', timestamp=50000, namespace=1), None)
+        # 'bar' is still there
+        self.assertEqual(gauged.value('bar', timestamp=50000), 5)
+        self.assertEqual(gauged.value('bar', timestamp=50000, namespace=1), 5)
+
+    def test_clear_key_after(self):
+        gauged = Gauged(self.driver, resolution=1000, block_size=10000)
+        with gauged.writer as writer:
+            writer.add({'foo': 1, 'bar': 1}, timestamp=10000)
+            writer.add({'foo': 2, 'bar': 2}, timestamp=20000)
+            writer.add({'foo': 3, 'bar': 3}, timestamp=30000)
+            writer.add({'foo': 4, 'bar': 4}, timestamp=40000, namespace=1)
+        self.assertEqual(gauged.value('foo', timestamp=40000), 3)
+        self.assertEqual(gauged.value('bar', timestamp=40000), 3)
+        self.assertEqual(gauged.value('foo', timestamp=40000, namespace=1), 4)
+        self.assertEqual(gauged.value('bar', timestamp=40000, namespace=1), 4)
+        # timestamp should be on a block boundary
+        with gauged.writer as writer:
+            with self.assertRaises(ValueError):
+                writer.clear_key_after('foo', timestamp=15000)
+        with gauged.writer as writer:
+            writer.clear_key_after('foo', timestamp=20000)
+        # every value before 20000 stays the same
+        self.assertEqual(gauged.value('foo', timestamp=10000), 1)
+        self.assertEqual(gauged.value('bar', timestamp=10000), 1)
+        # 'foo' value on 20000 is cleared
+        self.assertEqual(gauged.aggregate('foo', Gauged.COUNT, start=19000, end=21000), 0)
+        # 'foo' value after 20000 is cleared
+        self.assertEqual(gauged.aggregate('foo', Gauged.COUNT, start=20000, end=40000), 0)
+        # 'bar' stays there
+        self.assertEqual(gauged.value('bar', timestamp=10000), 1)
+
+        with gauged.writer as writer:
+            writer.add({'foo': 5, 'bar': 5}, timestamp=50000)
+            writer.add({'foo': 5, 'bar': 5}, timestamp=50000, namespace=1)
+            writer.add({'foo': 6, 'bar': 6}, timestamp=60000)
+            writer.add({'foo': 6, 'bar': 6}, timestamp=60000, namespace=1)
+        with gauged.writer as writer:
+            writer.clear_key_after('foo', namespace=1, timestamp=50000)
+        # 'foo' in namespace 0 is untouched after 50000
+        self.assertEqual(gauged.value('foo', timestamp=60000), 6)
+        # 'foo' in namespace 1 is correctly cleared
+        self.assertEqual(gauged.aggregate('foo', Gauged.COUNT, start=50000, end=60000, namespace=1), 0)
+        # 'bar' is still there
+        self.assertEqual(gauged.value('bar', timestamp=60000), 6)
+        self.assertEqual(gauged.value('bar', timestamp=60000, namespace=1), 6)
 
     def test_gauged_init_store(self):
         gauged = Gauged('sqlite+foo://')

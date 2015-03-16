@@ -5,11 +5,13 @@ Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 '''
 
 from types import DictType, BufferType
-from ctypes import (create_string_buffer, c_void_p, pythonapi, py_object, byref,
+from ctypes import (create_string_buffer, c_void_p, py_object, byref,
     cast, c_uint32, addressof, c_char, c_size_t, c_float)
 from ..bridge import Gauged, MapPtr, Uint32Ptr, FloatPtr
-from ..utilities import IS_PYPY
 from ..errors import GaugedUseAfterFreeError
+from ..utilities import IS_PYPY
+if not IS_PYPY:
+    from ctypes import pythonapi
 
 class SparseMap(object):
     '''A structure which adds another dimension to FloatArray. The

@@ -175,6 +175,37 @@ class Writer(object):
             raise ValueError('Timestamp must be on a block boundary')
         self.driver.clear_from(offset, timestamp)
 
+    def clear_key_before(self, key, namespace=None, timestamp=None):
+        '''Clear all data before `timestamp` for a given key. Note that the timestamp
+        is rounded down to the nearest block boundary'''
+        block_size = self.config.block_size
+        if namespace is None:
+            namespace = self.config.namespace
+        if timestamp is not None:
+            offset, remainder = divmod(timestamp, block_size)
+            if remainder:
+                raise ValueError('timestamp must be on a block boundary')
+            if offset == 0:
+                raise ValueError('cannot delete before offset zero')
+            offset -= 1
+            self.driver.clear_key_before(key, namespace, offset, timestamp)
+        else:
+            self.driver.clear_key_before(key, namespace)
+
+    def clear_key_after(self, key, namespace=None, timestamp=None):
+        '''Clear all data after `timestamp` for a given key. Note that the timestamp
+        is rounded down to the nearest block boundary'''
+        block_size = self.config.block_size
+        if namespace is None:
+            namespace = self.config.namespace
+        if timestamp is not None:
+            offset, remainder = divmod(timestamp, block_size)
+            if remainder:
+                raise ValueError('timestamp must be on a block boundary')
+            self.driver.clear_key_after(key, namespace, offset, timestamp)
+        else:
+            self.driver.clear_key_after(key, namespace)
+
     def parse_query(self, query):
         '''Parse a query string and return an iterator which yields (key, value)'''
         writer = self.writer

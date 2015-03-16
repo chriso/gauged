@@ -4,6 +4,7 @@ https://github.com/chriso/gauged (MIT Licensed)
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 '''
 
+
 class DriverInterface(object):
 
     MAX_KEY = 1024
@@ -15,6 +16,9 @@ class DriverInterface(object):
         raise NotImplementedError
 
     def drop_schema(self):
+        raise NotImplementedError
+
+    def prepare_migrations(self):
         raise NotImplementedError
 
     def keys(self, namespace, prefix=None, limit=None, offset=None):
@@ -62,13 +66,19 @@ class DriverInterface(object):
     def clear_from(self, offset, timestamp):
         raise NotImplementedError
 
+    def clear_key_after(self, key, namespace, offset=None, timestamp=None):
+        raise NotImplementedError
+
+    def clear_key_before(self, key, namespace, offset=None, timestamp=None):
+        raise NotImplementedError
+
     def get_cache(self, namespace, query_hash, length, start, end):
         pass
 
-    def add_cache(self, namespace, query_hash, length, cache):
+    def add_cache(self, namespace, key, query_hash, length, cache):
         pass
 
-    def remove_cache(self, namespace):
+    def remove_cache(self, namespace, key=None):
         pass
 
     def add_namespace_statistics(self, namespace, offset,

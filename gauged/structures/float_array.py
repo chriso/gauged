@@ -5,11 +5,13 @@ Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 '''
 
 from types import ListType, BufferType
-from ctypes import (create_string_buffer, c_void_p, pythonapi, py_object, byref,
+from ctypes import (create_string_buffer, c_void_p, py_object, byref,
     cast, addressof, c_char, c_size_t)
 from ..bridge import Gauged, FloatPtr
 from ..errors import GaugedUseAfterFreeError
 from ..utilities import IS_PYPY
+if not IS_PYPY:
+    from ctypes import pythonapi
 
 class FloatArray(object):
     '''An array of C floats'''

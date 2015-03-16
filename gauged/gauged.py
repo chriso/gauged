@@ -14,7 +14,7 @@ from .utilities import Time
 from .aggregates import Aggregate
 from .config import Config
 from .errors import (GaugedVersionMismatchError, GaugedBlockSizeMismatch,
-    GaugedSchemaError)
+    GaugedSchemaError, GaugedMigrationError)
 from .version import __version__
 
 class Gauged(object):
@@ -123,11 +123,6 @@ class Gauged(object):
             metadata = {}
         return metadata
 
-    def migrate(self):
-        '''Migrate an old Gauged schema to the current version. This is
-        just a placeholder for now'''
-        self.driver.set_metadata({ 'current_version': Gauged.VERSION })
-
     def make_context(self, **kwargs):
         '''Create a new context for reading data'''
         self.check_schema()
@@ -143,7 +138,7 @@ class Gauged(object):
             raise GaugedSchemaError('Gauged schema not found, try a gauged.sync()')
         if metadata['current_version'] != Gauged.VERSION:
             msg = 'The schema is version %s while this Gauged is version %s. '
-            msg += 'Try upgrading Gauged and/or running gauged.migrate()'
+            msg += 'Try upgrading Gauged and/or running gauged_migrate.py'
             msg = msg % (metadata['current_version'], Gauged.VERSION)
             raise GaugedVersionMismatchError(msg)
         expected_block_size = '%s/%s' % (config.block_size, config.resolution)

@@ -3,8 +3,9 @@ Gauged
 https://github.com/chriso/gauged (MIT Licensed)
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
 '''
-
+from collections import OrderedDict
 from .interface import DriverInterface
+
 
 class PostgreSQLDriver(DriverInterface):
     '''A PostgreSQL driver for gauged'''
@@ -194,6 +195,36 @@ class PostgreSQLDriver(DriverInterface):
         execute('''UPDATE gauged_writer_history SET timestamp = %s
             WHERE timestamp > %s''', (timestamp, timestamp))
 
+    def clear_key_before(self, key, namespace, offset=None, timestamp=None):
+        namespace_key = (namespace, key)
+        translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
+        execute = self.cursor.execute
+        if timestamp is not None:
+            params = (translated_key, namespace, offset)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s AND "offset" <= %s''', params)
+            params = (translated_key, namespace, timestamp)
+            execute('''DELETE FROM gauged_cache WHERE key = %s AND namespace = %s AND start + length <= %s''', params)
+        else:
+            params = (translated_key, namespace)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s''', params)
+            execute('''DELETE FROM gauged_keys WHERE key = %s AND namespace = %s''', params)
+            self.remove_cache(namespace, translated_key)
+
+    def clear_key_after(self, key, namespace, offset=None, timestamp=None):
+        namespace_key = (namespace, key)
+        translated_key = self.lookup_ids((namespace_key,)).get(namespace_key)
+        execute = self.cursor.execute
+        if timestamp is not None:
+            params = (translated_key, namespace, offset)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s AND "offset" >= %s''', params)
+            params = (translated_key, namespace, timestamp)
+            execute('''DELETE FROM gauged_cache WHERE key = %s AND namespace = %s AND start + length >= %s''', params)
+        else:
+            params = (translated_key, namespace)
+            execute('''DELETE FROM gauged_data WHERE key = %s AND namespace = %s''', params)
+            execute('''DELETE FROM gauged_keys WHERE key = %s AND namespace = %s''', params)
+            self.remove_cache(namespace, translated_key)
+
     def get_cache(self, namespace, query_hash, length, start, end):
         '''Get a cached value for the specified date range and query'''
         query_hash = self.psycopg2.Binary(query_hash)
@@ -203,33 +234,57 @@ class PostgreSQLDriver(DriverInterface):
             (namespace, query_hash, length, start, end))
         return cursor.fetchall()
 
-    def add_cache(self, namespace, query_hash, length, cache):
+    def add_cache(self, namespace, key, query_hash, length, cache):
         '''Add cached values for the specified date range and query'''
         start = 0
         bulk_insert = self.bulk_insert
         cache_len = len(cache)
-        row = '(%s,%s,%s,%s,%s)'
+        row = '(%s,%s,%s,%s,%s,%s)'
         query = '''INSERT INTO gauged_cache
-            (namespace, "hash", length, start, value) VALUES '''
+            (namespace, key, "hash", length, start, value) VALUES '''
         execute = self.cursor.execute
         query_hash = self.psycopg2.Binary(query_hash)
         while start < cache_len:
             rows = cache[start:start+bulk_insert]
             params = []
             for timestamp, value in rows:
-                params.extend(( namespace, query_hash, length, timestamp, value ))
+                params.extend(( namespace, key, query_hash, length, timestamp, value ))
             insert = (row + ',') * (len(rows) - 1) + row
             execute(query + insert, params)
             start += bulk_insert
         self.db.commit()
 
-    def remove_cache(self, namespace):
-        '''Remove all cached values for the specified namespace'''
-        self.cursor.execute('DELETE FROM gauged_cache WHERE namespace = %s', (namespace,))
+    def remove_cache(self, namespace, key=None):
+        '''Remove all cached values for the specified namespace,
+        optionally specifying a key'''
+        if key is None:
+            self.cursor.execute('DELETE FROM gauged_cache WHERE namespace = %s', (namespace,))
+        else:
+            self.cursor.execute('DELETE FROM gauged_cache WHERE namespace = %s AND key = %s', (namespace, key))
 
     def commit(self):
         '''Commit the current transaction'''
         self.db.commit()
+
+    def add_namespace_statistics(self, namespace, offset, data_points, byte_count):
+        '''Update namespace statistics for the period identified by
+        offset'''
+        query = '''UPDATE gauged_statistics SET data_points = data_points + %s,
+            byte_count = byte_count + %s WHERE namespace = %s AND "offset" = %s;
+            INSERT INTO gauged_statistics SELECT %s, %s, %s, %s WHERE NOT EXISTS (
+            SELECT 1 FROM gauged_statistics WHERE namespace = %s AND "offset" = %s)'''
+        self.cursor.execute(query, (data_points, byte_count, namespace,
+            offset, namespace, offset, data_points, byte_count, namespace, offset))
+
+    def get_namespace_statistics(self, namespace, start_offset, end_offset):
+        '''Get namespace statistics for the period between start_offset and
+        end_offset (inclusive)'''
+        cursor = self.cursor
+        cursor.execute('''SELECT SUM(data_points), SUM(byte_count)
+            FROM gauged_statistics WHERE namespace = %s AND "offset"
+            BETWEEN %s AND %s''', (namespace, start_offset, end_offset))
+        return [ long(count or 0) for count in cursor.fetchone() ]
+
 
     def create_schema(self):
         '''Create all necessary tables'''
@@ -262,6 +317,7 @@ class PostgreSQLDriver(DriverInterface):
                 timestamp bigint NOT NULL);
             CREATE TABLE IF NOT EXISTS gauged_cache (
                 namespace integer NOT NULL,
+                key bigint NOT NULL,
                 "hash" bytea NOT NULL,
                 length bigint NOT NULL,
                 start bigint NOT NULL,
@@ -311,21 +367,11 @@ class PostgreSQLDriver(DriverInterface):
         except self.psycopg2.InternalError: # pragma: no cover
             self.db.rollback()
 
-    def add_namespace_statistics(self, namespace, offset, data_points, byte_count):
-        '''Update namespace statistics for the period identified by
-        offset'''
-        query = '''UPDATE gauged_statistics SET data_points = data_points + %s,
-            byte_count = byte_count + %s WHERE namespace = %s AND "offset" = %s;
-            INSERT INTO gauged_statistics SELECT %s, %s, %s, %s WHERE NOT EXISTS (
-            SELECT 1 FROM gauged_statistics WHERE namespace = %s AND "offset" = %s)'''
-        self.cursor.execute(query, (data_points, byte_count, namespace,
-            offset, namespace, offset, data_points, byte_count, namespace, offset))
-
-    def get_namespace_statistics(self, namespace, start_offset, end_offset):
-        '''Get namespace statistics for the period between start_offset and
-        end_offset (inclusive)'''
-        cursor = self.cursor
-        cursor.execute('''SELECT SUM(data_points), SUM(byte_count)
-            FROM gauged_statistics WHERE namespace = %s AND "offset"
-            BETWEEN %s AND %s''', (namespace, start_offset, end_offset))
-        return [ long(count or 0) for count in cursor.fetchone() ]
+    def prepare_migrations(self):
+        migrations = OrderedDict()
+        migrations['0.4.1'] = ''
+        migrations['1.0.0'] = ['''
+        TRUNCATE gauged_cache''', '''
+        ALTER TABLE gauged_cache ADD COLUMN key bigint NOT NULL
+        ''']
+        return migrations
