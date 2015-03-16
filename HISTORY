@@ -1,3 +1,9 @@
+---[ 1.0.0 ]
+
+* Started following semver
+* Added a script to migrate gauged schemas
+* Delete all data for a key before or after a timestamp
+
 ---[ 0.4.1 ]
 
 * Fix linux builds when installed via pip
