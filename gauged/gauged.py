@@ -1,10 +1,9 @@
-'''
+"""
 Gauged
 https://github.com/chriso/gauged (MIT Licensed)
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
-'''
+"""
 
-from types import StringType
 from time import time
 from warnings import warn
 from .writer import Writer
@@ -14,11 +13,12 @@ from .utilities import Time
 from .aggregates import Aggregate
 from .config import Config
 from .errors import (GaugedVersionMismatchError, GaugedBlockSizeMismatch,
-    GaugedSchemaError, GaugedMigrationError)
+                     GaugedSchemaError)
 from .version import __version__
 
+
 class Gauged(object):
-    '''Read and write gauge data'''
+    """Read and write gauge data"""
 
     VERSION = __version__
 
@@ -47,7 +47,7 @@ class Gauged(object):
         in_memory = driver is None
         if in_memory:
             driver = SQLiteDriver.MEMORY
-        if type(driver) == StringType:
+        if isinstance(driver, basestring):
             driver = get_driver(driver)
         if config is None:
             config = Config()
@@ -61,51 +61,55 @@ class Gauged(object):
 
     @property
     def writer(self):
-        '''Create a new writer instance'''
+        """Create a new writer instance"""
         self.check_schema()
         return Writer(self.driver, self.config)
 
     def value(self, key, timestamp=None, namespace=None):
-        '''Get the value of a gauge at the specified time'''
+        """Get the value of a gauge at the specified time"""
         return self.make_context(key=key, end=timestamp,
-            namespace=namespace).value()
+                                 namespace=namespace).value()
 
     def aggregate(self, key, aggregate, start=None, end=None,
-            namespace=None, percentile=None):
-        '''Get an aggregate of all gauge data stored in the specified date range'''
+                  namespace=None, percentile=None):
+        """Get an aggregate of all gauge data stored in the specified date
+        range"""
         return self.make_context(key=key, aggregate=aggregate, start=start,
-            end=end, namespace=namespace,
-            percentile=percentile).aggregate()
+                                 end=end, namespace=namespace,
+                                 percentile=percentile).aggregate()
 
     def value_series(self, key, start=None, end=None, interval=None,
-            namespace=None, cache=None):
-        '''Get a time series of gauge values'''
+                     namespace=None, cache=None):
+        """Get a time series of gauge values"""
         return self.make_context(key=key, start=start, end=end,
-            interval=interval, namespace=namespace, cache=cache).value_series()
+                                 interval=interval, namespace=namespace,
+                                 cache=cache).value_series()
 
     def aggregate_series(self, key, aggregate, start=None, end=None,
-            interval=None, namespace=None, cache=None, percentile=None):
-        '''Get a time series of gauge aggregates'''
+                         interval=None, namespace=None, cache=None,
+                         percentile=None):
+        """Get a time series of gauge aggregates"""
         return self.make_context(key=key, aggregate=aggregate, start=start,
-            end=end, interval=interval, namespace=namespace, cache=cache,
-            percentile=percentile).aggregate_series()
+                                 end=end, interval=interval,
+                                 namespace=namespace, cache=cache,
+                                 percentile=percentile).aggregate_series()
 
     def keys(self, prefix=None, limit=None, offset=None, namespace=None):
-        '''Get gauge keys'''
+        """Get gauge keys"""
         return self.make_context(prefix=prefix, limit=limit, offset=offset,
-            namespace=namespace).keys()
+                                 namespace=namespace).keys()
 
     def namespaces(self):
-        '''Get a list of namespaces'''
+        """Get a list of namespaces"""
         return self.driver.get_namespaces()
 
     def statistics(self, start=None, end=None, namespace=None):
-        '''Get write statistics for the specified namespace and date range'''
+        """Get write statistics for the specified namespace and date range"""
         return self.make_context(start=start, end=end,
-            namespace=namespace).statistics()
+                                 namespace=namespace).statistics()
 
     def sync(self):
-        '''Create the necessary schema'''
+        """Create the necessary schema"""
         self.driver.create_schema()
         self.driver.set_metadata({
             'current_version': Gauged.VERSION,
@@ -116,26 +120,27 @@ class Gauged(object):
         }, replace=False)
 
     def metadata(self):
-        '''Get gauged metadata'''
+        """Get gauged metadata"""
         try:
             metadata = self.driver.all_metadata()
-        except: # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             metadata = {}
         return metadata
 
     def make_context(self, **kwargs):
-        '''Create a new context for reading data'''
+        """Create a new context for reading data"""
         self.check_schema()
         return Context(self.driver, self.config, **kwargs)
 
     def check_schema(self):
-        '''Check the schema exists and matches configuration'''
+        """Check the schema exists and matches configuration"""
         if self.valid_schema:
             return
         config = self.config
         metadata = self.metadata()
         if 'current_version' not in metadata:
-            raise GaugedSchemaError('Gauged schema not found, try a gauged.sync()')
+            raise GaugedSchemaError('Gauged schema not found, '
+                                    'try a gauged.sync()')
         if metadata['current_version'] != Gauged.VERSION:
             msg = 'The schema is version %s while this Gauged is version %s. '
             msg += 'Try upgrading Gauged and/or running gauged_migrate.py'

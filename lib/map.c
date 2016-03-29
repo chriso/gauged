@@ -243,7 +243,7 @@ GAUGED_EXPORT float gauged_map_mean(const gauged_map_t *map) {
             result += element;
         }
     }
-    return total ? (float)result / (float)total : NAN;
+    return total != 0 ? (float)result / (float)total : NAN;
 }
 
 GAUGED_EXPORT float gauged_map_sum_of_squares(const gauged_map_t *map, float mean) {

@@ -1,29 +1,30 @@
-'''
+"""
 Gauged
 https://github.com/chriso/gauged (MIT Licensed)
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
-'''
+"""
 
-from types import ListType, BufferType
 from ctypes import (create_string_buffer, c_void_p, py_object, byref,
-    cast, addressof, c_char, c_size_t)
+                    cast, addressof, c_char, c_size_t)
 from ..bridge import Gauged, FloatPtr
 from ..errors import GaugedUseAfterFreeError
 from ..utilities import IS_PYPY
+
 if not IS_PYPY:
-    from ctypes import pythonapi
+    from ctypes import pythonapi  # pylint: disable=wrong-import-order
+
 
 class FloatArray(object):
-    '''An array of C floats'''
+    """An array of C floats"""
 
     ALLOCATIONS = 0
 
-    __slots__ = [ '_ptr' ]
+    __slots__ = ['_ptr']
 
     def __init__(self, buf=None, length=0):
-        '''Create a new array. The constructor accepts a buffer + byte_length or a
-        python list of floats'''
-        if type(buf) == ListType:
+        """Create a new array. The constructor accepts a buffer + byte_length
+        or a python list of floats"""
+        if isinstance(buf, list):
             items = buf
             buf = None
         else:
@@ -31,11 +32,12 @@ class FloatArray(object):
         if buf is not None:
             if IS_PYPY:
                 buf = create_string_buffer(str(buf))
-            if type(buf) == BufferType:
+            if isinstance(buf, buffer):
                 address = c_void_p()
                 buf_length = c_size_t()
                 pythonapi.PyObject_AsReadBuffer(py_object(buf),
-                    byref(address), byref(buf_length))
+                                                byref(address),
+                                                byref(buf_length))
                 buf_length = buf_length.value
                 buf = address
             buf = cast(buf, FloatPtr)
@@ -49,13 +51,13 @@ class FloatArray(object):
 
     @property
     def ptr(self):
-        '''Get the array's C pointer'''
+        """Get the array's C pointer"""
         if self._ptr is None:
             raise GaugedUseAfterFreeError
         return self._ptr
 
     def free(self):
-        '''Free the underlying C array'''
+        """Free the underlying C array"""
         if self._ptr is None:
             return
         Gauged.array_free(self.ptr)
@@ -63,42 +65,43 @@ class FloatArray(object):
         self._ptr = None
 
     def values(self):
-        '''Get all floats in the array as a list'''
+        """Get all floats in the array as a list"""
         return list(self)
 
     def append(self, member):
-        '''Append a float to the array'''
+        """Append a float to the array"""
         if not Gauged.array_append(self.ptr, member):
             raise MemoryError
 
     def byte_length(self):
-        '''Get the byte length of the array'''
+        """Get the byte length of the array"""
         return self.ptr.contents.length * 4
 
     def buffer(self, byte_offset=0):
-        '''Get a copy of the array buffer'''
+        """Get a copy of the array buffer"""
         contents = self.ptr.contents
         ptr = addressof(contents.buffer.contents) + byte_offset
         length = contents.length * 4 - byte_offset
-        return buffer((c_char * length).from_address(ptr).raw) if length else None
+        return buffer((c_char * length).from_address(ptr).raw) \
+            if length else None
 
     def clear(self):
-        '''Clear the array'''
+        """Clear the array"""
         self.ptr.contents.length = 0
 
     def __getitem__(self, offset):
-        '''Get the member at the specified offset'''
+        """Get the member at the specified offset"""
         contents = self.ptr.contents
         if offset >= contents.length:
             raise IndexError
         return contents.buffer[offset]
 
     def __len__(self):
-        '''Get the number of floats in the array'''
+        """Get the number of floats in the array"""
         return self.ptr.contents.length
 
     def __repr__(self):
-        return '[' + ', '.join(( str(value) for value in self )) + ']'
+        return '[' + ', '.join(str(value) for value in self) + ']'
 
     def __enter__(self):
         return self

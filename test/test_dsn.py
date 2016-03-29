@@ -1,13 +1,14 @@
-'''
+"""
 Gauged - https://github.com/chriso/gauged
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
-'''
+"""
 
 from gauged.drivers import parse_dsn, SQLiteDriver
 from .test_case import TestCase
 
+
 class TestDSN(TestCase):
-    '''Test the driver functions'''
+    """Test the driver functions"""
 
     def test_stripping_dialect_from_schema(self):
         driver = parse_dsn('sqlite+foobar://')[0]

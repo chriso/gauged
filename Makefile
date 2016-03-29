@@ -50,11 +50,14 @@ cbenchmark: cclean
 			&& test/benchmark
 
 lint:
+	@command -v flake8 >/dev/null || \
+		(echo "The flake8 tool is required (pip install flake8)" && exit 1)
+	@flake8 *.py gauged test --exclude=__init__.py
 	@command -v pylint >/dev/null || \
 		(echo "The pylint tool is required (pip install pylint)" && exit 1)
 	@pylint --rcfile=.pylintrc \
 			--output-format=colorized \
-			--report=n gauged
+			--reports=n gauged
 
 publish:
 	@python setup.py sdist upload

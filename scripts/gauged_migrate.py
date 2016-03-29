@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 from gauged import Gauged
 import argparse
@@ -14,7 +13,7 @@ def migrate(options):
     current_version = current_meta['current_version']
     goto_version = gauged.VERSION
     if current_version > goto_version:
-        logging.error("You have a newer schema than the current version")
+        logging.error('You have a newer schema than the current version')
         return 1
     for version, upgrade_script in migrations.iteritems():
         logging.debug('-' * 20)
@@ -48,25 +47,25 @@ def migrate(options):
         current_version = version
 
 if __name__ == '__main__':
-    descr = "Migrate a Gauged database to the latest version"
+    descr = 'Migrate a Gauged database to the latest version'
     parser = argparse.ArgumentParser(description=descr)
     parser.add_argument(
         '-d', '--debug',
         help='Enable full DEBUG logs',
-        action="store_const", dest="loglevel",
+        action='store_const', dest='loglevel',
         const=logging.DEBUG,
         default=logging.WARNING
     )
     parser.add_argument(
         '-v', '--verbose',
         help='Enable basic logging',
-        action="store_const",
-        dest="loglevel", const=logging.INFO
+        action='store_const',
+        dest='loglevel', const=logging.INFO
     )
     parser.add_argument(
         '-u', '--uri',
         help='Uri to the Gauged Database',
-        action="store",
+        action='store',
         required=True
     )
     options = parser.parse_args()

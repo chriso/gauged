@@ -1,26 +1,25 @@
-'''
+"""
 Gauged
 https://github.com/chriso/gauged (MIT Licensed)
 Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
-'''
+"""
 
 from time import time
 from threading import Timer
-from types import StringType, UnicodeType, DictType
 from collections import defaultdict
 from pprint import pprint
-from ctypes import c_uint32, byref
+from ctypes import c_uint32, byref, c_float
 from .structures import SparseMap
 from .lru import LRU
-from ctypes import c_float
-from .errors import (GaugedAppendOnlyError, GaugedKeyOverflowError, GaugedNaNError,
-    GaugedUseAfterFreeError)
+from .errors import (GaugedAppendOnlyError, GaugedKeyOverflowError,
+                     GaugedNaNError, GaugedUseAfterFreeError)
 from .bridge import Gauged
 from .results import Statistics
 from .utilities import to_bytes
 
+
 class Writer(object):
-    '''Handle queueing and writes to the specified data store'''
+    """Handle queueing and writes to the specified data store"""
 
     ERROR = 0
     IGNORE = 1
@@ -45,11 +44,12 @@ class Writer(object):
         self.writer = None
         self.allocate_writer()
 
-    def add(self, data, value=None, timestamp=None, namespace=None, debug=False):
-        '''Queue a gauge or gauges to be written'''
+    def add(self, data, value=None, timestamp=None, namespace=None,
+            debug=False):
+        """Queue a gauge or gauges to be written"""
         if value is not None:
             return self.add(((data, value),), timestamp=timestamp,
-                namespace=namespace, debug=debug)
+                            namespace=namespace, debug=debug)
         writer = self.writer
         if writer is None:
             raise GaugedUseAfterFreeError
@@ -62,8 +62,8 @@ class Writer(object):
         if namespace is None:
             namespace = config.namespace
         if this_block < self.current_block or \
-                (this_block == self.current_block \
-                    and this_array < self.current_array):
+                (this_block == self.current_block and
+                 this_array < self.current_array):
             if config.append_only_violation == Writer.ERROR:
                 msg = 'Gauged is append-only; timestamps must be increasing'
                 raise GaugedAppendOnlyError(msg)
@@ -72,7 +72,7 @@ class Writer(object):
                 this_array = self.current_array
             else:
                 return
-        if type(data) == UnicodeType:
+        if isinstance(data, unicode):
             data = data.encode('utf8')
         if debug:
             return self.debug(timestamp, namespace, data)
@@ -89,17 +89,17 @@ class Writer(object):
         whitelist = config.key_whitelist
         skip_long_keys = config.key_overflow == Writer.IGNORE
         skip_gauge_nan = config.gauge_nan == Writer.IGNORE
-        if type(data) == StringType and skip_gauge_nan \
-                and skip_long_keys and whitelist is None: # fast path
+        if isinstance(data, str) and skip_gauge_nan \
+                and skip_long_keys and whitelist is None:  # fast path
             data_points = c_uint32(0)
-            if not Gauged.writer_emit_pairs(writer, namespace, data, \
-                    byref(data_points)):
+            if not Gauged.writer_emit_pairs(writer, namespace, data,
+                                            byref(data_points)):
                 raise MemoryError
             data_points = data_points.value
         else:
-            if type(data) == DictType:
+            if isinstance(data, dict):
                 data = data.iteritems()
-            elif type(data) == StringType:
+            elif isinstance(data, str):
                 data = self.parse_query(data)
             emit = Gauged.writer_emit
             for key, value in data:
@@ -110,7 +110,7 @@ class Writer(object):
                     value = float(value)
                 except ValueError:
                     value = float('nan')
-                if value != value: # NaN?
+                if value != value:  # => NaN?
                     if skip_gauge_nan:
                         continue
                     raise GaugedNaNError
@@ -128,7 +128,7 @@ class Writer(object):
             self.flush()
 
     def flush(self):
-        '''Flush all pending gauges'''
+        """Flush all pending gauges"""
         writer = self.writer
         if writer is None:
             raise GaugedUseAfterFreeError
@@ -138,14 +138,15 @@ class Writer(object):
         current_block = self.current_block
         statistics = self.statistics
         driver = self.driver
-        flags = 0 # for future extensions, e.g. block compression
+        flags = 0  # for future extensions, e.g. block compression
         for namespace, key, block in self.pending_blocks():
             length = block.byte_length()
             if not length:
                 continue
-            key_id = keys[( namespace, key )]
+            key_id = keys[(namespace, key)]
             statistics[namespace].byte_count += length
-            blocks.append((namespace, current_block, key_id, block.buffer(), flags))
+            blocks.append((namespace, current_block, key_id, block.buffer(),
+                           flags))
         if self.config.overwrite_blocks:
             driver.replace_blocks(blocks)
         else:
@@ -155,20 +156,20 @@ class Writer(object):
         update_namespace = driver.add_namespace_statistics
         for namespace, stats in statistics.iteritems():
             update_namespace(namespace, self.current_block,
-                stats.data_points, stats.byte_count)
+                             stats.data_points, stats.byte_count)
         statistics.clear()
         driver.commit()
         self.flush_now = False
 
     def resume_from(self):
-        '''Get a timestamp representing the position just after the last
-        written gauge'''
+        """Get a timestamp representing the position just after the last
+        written gauge"""
         position = self.driver.get_writer_position(self.config.writer_name)
         return position + self.config.resolution if position else 0
 
     def clear_from(self, timestamp):
-        '''Clear all data from `timestamp` onwards. Note that the timestamp
-        is rounded down to the nearest block boundary'''
+        """Clear all data from `timestamp` onwards. Note that the timestamp
+        is rounded down to the nearest block boundary"""
         block_size = self.config.block_size
         offset, remainder = timestamp // block_size, timestamp % block_size
         if remainder:
@@ -176,8 +177,8 @@ class Writer(object):
         self.driver.clear_from(offset, timestamp)
 
     def clear_key_before(self, key, namespace=None, timestamp=None):
-        '''Clear all data before `timestamp` for a given key. Note that the timestamp
-        is rounded down to the nearest block boundary'''
+        """Clear all data before `timestamp` for a given key. Note that the
+        timestamp is rounded down to the nearest block boundary"""
         block_size = self.config.block_size
         if namespace is None:
             namespace = self.config.namespace
@@ -193,8 +194,8 @@ class Writer(object):
             self.driver.clear_key_before(key, namespace)
 
     def clear_key_after(self, key, namespace=None, timestamp=None):
-        '''Clear all data after `timestamp` for a given key. Note that the timestamp
-        is rounded down to the nearest block boundary'''
+        """Clear all data after `timestamp` for a given key. Note that the
+        timestamp is rounded down to the nearest block boundary"""
         block_size = self.config.block_size
         if namespace is None:
             namespace = self.config.namespace
@@ -207,7 +208,8 @@ class Writer(object):
             self.driver.clear_key_after(key, namespace)
 
     def parse_query(self, query):
-        '''Parse a query string and return an iterator which yields (key, value)'''
+        """Parse a query string and return an iterator which yields
+        (key, value)"""
         writer = self.writer
         if writer is None:
             raise GaugedUseAfterFreeError
@@ -220,18 +222,18 @@ class Writer(object):
             yield pointers[position], pointers[position+1]
             position += 2
 
-    def debug(self, timestamp, namespace, data): # pragma: no cover
+    def debug(self, timestamp, namespace, data):  # pragma: no cover
         print 'Timestamp: %s, Namespace: %s' % (timestamp, namespace)
-        if type(data) == StringType:
+        if isinstance(data, str):
             data = self.parse_query(data)
-        elif type(data) == DictType:
+        elif isinstance(data, dict):
             data = data.iteritems()
         whitelist = self.config.key_whitelist
         if whitelist is not None:
-            data = { key: value for key, value in data if key in whitelist }
+            data_dict = {key: value for key, value in data if key in whitelist}
         else:
-            data = dict(data)
-        pprint(data)
+            data_dict = dict(data)
+        pprint(data_dict)
         print ''
 
     def flush_writer_position(self):
@@ -246,7 +248,7 @@ class Writer(object):
         if not len(keys):
             return {}
         key_cache = self.key_cache
-        to_translate = [ key for key in keys if key not in key_cache ]
+        to_translate = [key for key in keys if key not in key_cache]
         self.driver.insert_keys(to_translate)
         ids = self.driver.lookup_ids(to_translate)
         for key in keys:

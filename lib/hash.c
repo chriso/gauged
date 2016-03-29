@@ -23,7 +23,7 @@
 
 #define GAUGED_HASH_SEED 5132
 
-#define XXH_LE32(p) *(unsigned int*)(p)
+#define XXH_LE32(p) *(const unsigned int*)(p)
 #define XXH_rotl32(x, r) ((x << r) | (x >> (32 - r)))
 
 GAUGED_EXPORT void gauged_hash_init(gauged_xxhash_t *hash) {

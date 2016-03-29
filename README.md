@@ -2,16 +2,16 @@
 
 [![tests][travis]][travis-builds]
 
-A fast, append-only storage layer for gauges, counters, timers and other numeric data types that change over time.
+An append-only storage layer for gauges, counters, timers and other numeric data types that change over time.
 
 Features:
 
 - Comfortably handle billions of data points on a single node.
-- Support for sparse data (unlike the fixed-size RRDtool).
+- Support for sparse data, unlike the fixed-size RRDtool.
 - Cache-oblivious data structures and algorithms for speed and memory-efficiency.
-- Efficient range queries and roll-ups of any size down to the configurable resolution of 1 second.
-- Use either **MySQL**, **PostgreSQL** or **SQLite** as a backend.
-- Runs on Mac, Linux & Windows
+- Range queries and roll-ups of any size down to the configurable resolution of 1 second.
+- Use either **MySQL**, **PostgreSQL** or **SQLite** for persistence.
+- Runs on Mac, Linux & Windows.
 
 ## Installation
 
@@ -21,11 +21,11 @@ The library can be installed with **easy_install** or **pip**
 $ pip install gauged
 ```
 
-Python 2.7.x (CPython or PyPy) is required.
+Python 2.7.x (e.g. CPython or PyPy) is required.
 
 ## Example
 
-Writing
+Writing data:
 
 ```python
 from gauged import Gauged
@@ -37,7 +37,7 @@ with gauged.writer as writer:
     writer.add({ 'requests': 1, 'response_time': 0.25, 'cpu_usage': 148.3, 'api_requests': 3 })
 ```
 
-Reading
+Reading data:
 
 ```python
 # Count the total number of requests
@@ -55,7 +55,7 @@ response_time = gauged.aggregate('response_time', Gauged.PERCENTILE,
 memory_usage = gauged.value('memory_usage')
 ```
 
-Plotting (using [matplotlib][matplotlib])
+Plotting data (using [matplotlib][matplotlib]):
 
 ```python
 import pylab
@@ -73,7 +73,7 @@ See the [documentation][documentation] or [technical overview][technical-overvie
 
 You can run the test suite using an in-memory driver with `make check-quick`.
 
-To run the full suite, first edit the configuration in `test_drivers.cfg` so that PostgreSQL and Mysql both point to existing (and empty) databases, then run
+To run the full suite, first edit the configuration in `test_drivers.cfg` so that PostgreSQL and MySQL both point to existing (and empty) databases, then run:
 
 ```bash
 $ make check
@@ -83,7 +83,7 @@ You can run coverage analysis with `make coverage` and run a lint tool `make lin
 
 ## Benchmarks
 
-Use `make build` followed by `python benchmark [OPTIONS]` to run benchmarks using a SQLite-based in-memory database. Your mileage will vary once you add I/O.
+Use `make build` followed by `python benchmark [OPTIONS]` to run benchmarks using a SQLite-based in-memory database. YMMV.
 
 **python benchmark.py --number 1000000 --days 365**
 
