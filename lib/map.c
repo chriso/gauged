@@ -3,16 +3,17 @@
  * Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include <assert.h>
 #include <float.h>
 #include <math.h>
-#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "map.h"
 #include "hash.h"
+#include "map.h"
 
-GAUGED_EXPORT gauged_map_t *gauged_map_import(const uint32_t *buffer, size_t size) {
+GAUGED_EXPORT gauged_map_t *gauged_map_import(const uint32_t *buffer,
+                                              size_t size) {
     gauged_map_t *map = malloc(sizeof(gauged_map_t));
     if (!map) {
         return NULL;
@@ -66,12 +67,11 @@ GAUGED_EXPORT uint32_t *gauged_map_export(const gauged_map_t *map) {
     return map->buffer;
 }
 
-GAUGED_EXPORT void gauged_map_clear(gauged_map_t *map) {
-    map->length = 0;
-}
+GAUGED_EXPORT void gauged_map_clear(gauged_map_t *map) { map->length = 0; }
 
-GAUGED_EXPORT uint32_t *gauged_map_advance(uint32_t *buffer, size_t *header, uint32_t *position,
-        size_t *length, float **array) {
+GAUGED_EXPORT uint32_t *gauged_map_advance(uint32_t *buffer, size_t *header,
+                                           uint32_t *position, size_t *length,
+                                           float **array) {
     if (*buffer & 0x80000000) {
         *length = (*buffer >> 22) & 0x1FF;
         *position = *buffer & 0x3FFFFF;
@@ -92,8 +92,9 @@ static inline size_t gauged_map_header_size(uint32_t position, size_t length) {
     return (position > ((1 << 22) - 1) || length > ((1 << 9) - 1)) + 1;
 }
 
-static inline void gauged_map_encode(uint32_t *buffer, uint32_t position, size_t length,
-        const gauged_array_t *array) {
+static inline void gauged_map_encode(uint32_t *buffer, uint32_t position,
+                                     size_t length,
+                                     const gauged_array_t *array) {
     size_t header = gauged_map_header_size(position, length);
     if (header == 1) {
         *buffer = 0x80000000 | (uint32_t)(length << 22) | position;
@@ -107,21 +108,24 @@ static inline void gauged_map_encode(uint32_t *buffer, uint32_t position, size_t
 }
 
 GAUGED_EXPORT int gauged_map_append(gauged_map_t *map, uint32_t position,
-        const gauged_array_t *array) {
+                                    const gauged_array_t *array) {
     if (!array->length) {
         return GAUGED_OK;
     }
-    size_t required_size = gauged_map_header_size(position, array->length) + array->length;
+    size_t required_size =
+        gauged_map_header_size(position, array->length) + array->length;
     if (!gauged_map_resize(map, map->length + required_size)) {
         return GAUGED_ERROR;
     }
-    gauged_map_encode(map->buffer + map->length, position, array->length, array);
+    gauged_map_encode(map->buffer + map->length, position, array->length,
+                      array);
     map->length += required_size;
     return GAUGED_OK;
 }
 
-GAUGED_EXPORT int gauged_map_concat(gauged_map_t *a, const gauged_map_t *b, uint32_t start,
-        uint32_t end, uint32_t offset) {
+GAUGED_EXPORT int gauged_map_concat(gauged_map_t *a, const gauged_map_t *b,
+                                    uint32_t start, uint32_t end,
+                                    uint32_t offset) {
     size_t initial_length = a->length;
     gauged_array_t *array;
     uint32_t position;
@@ -153,7 +157,8 @@ static inline gauged_array_t *gauged_map_merge(gauged_map_t *map) {
     uint32_t position, *buffer = map->buffer, *end = map->buffer + map->length;
     size_t header;
     while (buffer < end) {
-        buffer = gauged_map_advance(buffer, &header, &position, &array.length, &array.buffer);
+        buffer = gauged_map_advance(buffer, &header, &position, &array.length,
+                                    &array.buffer);
         for (size_t i = 0; i < array.length; i++) {
             (merged->buffer + merged->length)[i] = array.buffer[i];
         }
@@ -200,9 +205,7 @@ GAUGED_EXPORT float gauged_map_sum(const gauged_map_t *map) {
     double result = 0;
     float element = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
-        GAUGED_ARRAY_FOREACH(array, element) {
-            result += element;
-        }
+        GAUGED_ARRAY_FOREACH(array, element) { result += element; }
     }
     return (float)result;
 }
@@ -236,17 +239,17 @@ GAUGED_EXPORT float gauged_map_max(const gauged_map_t *map) {
 GAUGED_EXPORT float gauged_map_mean(const gauged_map_t *map) {
     gauged_array_t *array;
     float element = 0;
-    double result = 0, total = 0;
+    double result = 0;
+    size_t total = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         total += array->length;
-        GAUGED_ARRAY_FOREACH(array, element) {
-            result += element;
-        }
+        GAUGED_ARRAY_FOREACH(array, element) { result += element; }
     }
     return total != 0 ? (float)result / (float)total : NAN;
 }
 
-GAUGED_EXPORT float gauged_map_sum_of_squares(const gauged_map_t *map, float mean) {
+GAUGED_EXPORT float gauged_map_sum_of_squares(const gauged_map_t *map,
+                                              float mean) {
     gauged_array_t *array;
     double sum = 0;
     float element = 0;
@@ -265,9 +268,7 @@ GAUGED_EXPORT float gauged_map_stddev(const gauged_map_t *map) {
     size_t total = 0;
     GAUGED_MAP_FOREACH_ARRAY(map, array) {
         total += array->length;
-        GAUGED_ARRAY_FOREACH(array, element) {
-            sum += element;
-        }
+        GAUGED_ARRAY_FOREACH(array, element) { sum += element; }
     }
     if (!total) {
         return NAN;
@@ -279,15 +280,14 @@ GAUGED_EXPORT float gauged_map_stddev(const gauged_map_t *map) {
 GAUGED_EXPORT float gauged_map_count(const gauged_map_t *map) {
     gauged_array_t *array;
     float result = 0;
-    GAUGED_MAP_FOREACH_ARRAY(map, array) {
-        result += array->length;
-    }
+    GAUGED_MAP_FOREACH_ARRAY(map, array) { result += array->length; }
     return result;
 }
 
 GAUGED_EXPORT int gauged_map_percentile(gauged_map_t *map, float percentile,
-        float *result_) {
-    if (!map->length || percentile < 0 || percentile > 100 || isnan(percentile)) {
+                                        float *result_) {
+    if (!map->length || percentile < 0 || percentile > 100 ||
+        isnan(percentile)) {
         *result_ = NAN;
         return GAUGED_OK;
     }
@@ -304,7 +304,8 @@ GAUGED_EXPORT int gauged_map_percentile(gauged_map_t *map, float percentile,
         result = values->buffer[(size_t)rank];
     } else {
         result = values->buffer[(size_t)nearest_rank];
-        result += (rank - nearest_rank) * (values->buffer[(size_t)nearest_rank+1] - result);
+        result += (rank - nearest_rank) *
+                  (values->buffer[(size_t)nearest_rank + 1] - result);
     }
     gauged_array_free(values);
     *result_ = result;

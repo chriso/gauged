@@ -40,6 +40,9 @@ ctest: ctest_deps
 ccoverage: ctest
 	@(gcov lib/*.c && cat *.gcov) | less
 
+cformat:
+	@clang-format -i **/*.{h,c}
+
 benchmark: build
 	@python benchmark.py
 

@@ -3,10 +3,10 @@
  * Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "test.h"
 
@@ -25,7 +25,8 @@ int main() {
     gauged_writer_emit(writer, 1, "baz", 30);
     gauged_writer_emit(writer, 1, "baz", 40);
 
-    GAUGED_EXPECT("Writer ignores large keys",
+    GAUGED_EXPECT(
+        "Writer ignores large keys",
         GAUGED_KEY_OVERFLOW == gauged_writer_emit(writer, 0, "foooo", 1));
 
     gauged_writer_flush_arrays(writer, 10);
@@ -46,18 +47,27 @@ int main() {
             map = node->map;
             if (node->namespace_ == 0) {
                 if (!strcmp("foo", node->key)) {
-                    GAUGED_EXPECT("Pending map stores the namespace A", 0 == node->namespace_);
-                    GAUGED_EXPECT("Pending map stores the key A", 0 == strcmp("foo", node->key));
-                    GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map A", gauged_map_sum(map), 30);
+                    GAUGED_EXPECT("Pending map stores the namespace A",
+                                  0 == node->namespace_);
+                    GAUGED_EXPECT("Pending map stores the key A",
+                                  0 == strcmp("foo", node->key));
+                    GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map A",
+                                               gauged_map_sum(map), 30);
                 } else {
-                    GAUGED_EXPECT("Pending map stores the namespace B", 0 == node->namespace_);
-                    GAUGED_EXPECT("Pending map stores the key B", 0 == strcmp("baz", node->key));
-                    GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map B", gauged_map_sum(map), 50);
+                    GAUGED_EXPECT("Pending map stores the namespace B",
+                                  0 == node->namespace_);
+                    GAUGED_EXPECT("Pending map stores the key B",
+                                  0 == strcmp("baz", node->key));
+                    GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map B",
+                                               gauged_map_sum(map), 50);
                 }
             } else if (node->namespace_ == 1) {
-                GAUGED_EXPECT("Pending map stores the namespace C", 1 == node->namespace_);
-                GAUGED_EXPECT("Pending map stores the key C", 0 == strcmp("baz", node->key));
-                GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map C", gauged_map_sum(map), 130);
+                GAUGED_EXPECT("Pending map stores the namespace C",
+                              1 == node->namespace_);
+                GAUGED_EXPECT("Pending map stores the key C",
+                              0 == strcmp("baz", node->key));
+                GAUGED_EXPECT_FLOAT_EQUALS("Pending map stores the map C",
+                                           gauged_map_sum(map), 130);
             }
             expected_maps++;
         }
@@ -67,34 +77,40 @@ int main() {
 
     GAUGED_EXPECT("Pending map size before flush", 3 == writer->pending->count);
     gauged_writer_flush_maps(writer, true);
-    GAUGED_EXPECT("Pending map size after soft flush", 3 == writer->pending->count);
+    GAUGED_EXPECT("Pending map size after soft flush",
+                  3 == writer->pending->count);
     gauged_writer_flush_maps(writer, false);
     GAUGED_EXPECT("Pending map size after flush", 0 == writer->pending->count);
 
-    gauged_writer_parse_query(writer, "foo=bar&baz&bah=&%3Ckey%3E=%3D%3Dvalue%3D%3D%3");
+    gauged_writer_parse_query(writer,
+                              "foo=bar&baz&bah=&%3Ckey%3E=%3D%3Dvalue%3D%3D%3");
 
-    GAUGED_EXPECT("Parsed key/value pairs from query", 6 == writer->buffer_size);
+    GAUGED_EXPECT("Parsed key/value pairs from query",
+                  6 == writer->buffer_size);
 
-    char *expected[] = { "foo", "bar", "bah", "", "<key>", "==value==%3" };
+    char *expected[] = {"foo", "bar", "bah", "", "<key>", "==value==%3"};
     assert(sizeof(expected) / sizeof(expected[0]) == writer->buffer_size);
     for (size_t i = 0; i < writer->buffer_size; i++) {
-        GAUGED_EXPECT("Parsed key/value from string", !strcmp(expected[i], writer->buffer[i]));
+        GAUGED_EXPECT("Parsed key/value from string",
+                      !strcmp(expected[i], writer->buffer[i]));
     }
 
     gauged_writer_parse_query(writer, "foo+bar=baz\n");
 
-    char *expected_b[] = { "foo bar", "baz" };
-    GAUGED_EXPECT("Parsed key/value pairs from query", 2 == writer->buffer_size);
+    char *expected_b[] = {"foo bar", "baz"};
+    GAUGED_EXPECT("Parsed key/value pairs from query",
+                  2 == writer->buffer_size);
     assert(sizeof(expected_b) / sizeof(expected_b[0]) == writer->buffer_size);
     for (size_t i = 0; i < writer->buffer_size; i++) {
-        GAUGED_EXPECT("Parsed key/value from string", !strcmp(expected_b[i], writer->buffer[i]));
+        GAUGED_EXPECT("Parsed key/value from string",
+                      !strcmp(expected_b[i], writer->buffer[i]));
     }
 
     gauged_writer_free(writer);
 
     writer = gauged_writer_new(4);
 
-    char key[2] = { 'A', '\0' };
+    char key[2] = {'A', '\0'};
     for (char c = 'A'; c <= 'Z'; c++) {
         key[0] = c;
         gauged_writer_emit(writer, 0, key, 10);
@@ -149,8 +165,8 @@ int main() {
     GAUGED_EXPECT_SORTED("Array sorting (large)", large);
     gauged_array_free(large);
 
-    gauged_array_t *array_copy = gauged_array_import(gauged_array_export(array),
-        gauged_array_length(array));
+    gauged_array_t *array_copy = gauged_array_import(
+        gauged_array_export(array), gauged_array_length(array));
     assert(array_copy);
     GAUGED_EXPECT_EQUALS("Array import/export", array, 1, 6, 8, 10);
     gauged_array_free(array_copy);
@@ -170,8 +186,8 @@ int main() {
     GAUGED_EXPECT_FLOAT_EQUALS("Map append A", gauged_map_sum(map), 225);
     GAUGED_EXPECT("Map append B", gauged_map_length(map) == 36);
 
-    gauged_map_t *map_copy = gauged_map_import(gauged_map_export(map),
-        gauged_map_length(map));
+    gauged_map_t *map_copy =
+        gauged_map_import(gauged_map_export(map), gauged_map_length(map));
     assert(map_copy);
     GAUGED_EXPECT_FLOAT_EQUALS("Map copy", gauged_map_sum(map), 225);
     gauged_map_free(map_copy);
@@ -216,7 +232,8 @@ int main() {
     GAUGED_EXPECT_FLOAT_EQUALS("Map min", gauged_map_min(map), -8);
     GAUGED_EXPECT_FLOAT_EQUALS("Map max", gauged_map_max(map), 20);
     GAUGED_EXPECT_FLOAT_EQUALS("Map mean", gauged_map_mean(map), 7);
-    GAUGED_EXPECT_FLOAT_EQUALS("Map stddev", gauged_map_stddev(map), 9.224062735);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map stddev", gauged_map_stddev(map),
+                               9.224062735);
     GAUGED_EXPECT_FLOAT_EQUALS("Map count", gauged_map_count(map), 6);
 
     copy = GAUGED_MAP_COPY(map);

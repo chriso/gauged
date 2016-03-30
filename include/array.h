@@ -77,9 +77,10 @@ int gauged_array_sort(gauged_array_t *);
  * Iterate over all floats in the array.
  */
 
-#define GAUGED_ARRAY_FOREACH(array, element) \
-    size_t ZTMP(i, __LINE__) = 0; \
-    while (ZTMP(i, __LINE__) < array->length ? \
-        (element = array->buffer[ZTMP(i, __LINE__)++], 1) : 0)
+#define GAUGED_ARRAY_FOREACH(array, element)                       \
+    size_t ZTMP(i, __LINE__) = 0;                                  \
+    while (ZTMP(i, __LINE__) < array->length                       \
+               ? (element = array->buffer[ZTMP(i, __LINE__)++], 1) \
+               : 0)
 
 #endif

@@ -3,15 +3,16 @@
  * Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
  */
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
-#include "common.h"
 #include "array.h"
+#include "common.h"
 #include "sort.h"
 
-GAUGED_EXPORT gauged_array_t *gauged_array_import(const float *buffer, size_t size) {
+GAUGED_EXPORT gauged_array_t *gauged_array_import(const float *buffer,
+                                                  size_t size) {
     gauged_array_t *array = malloc(sizeof(gauged_array_t));
     if (!array) {
         return NULL;
@@ -95,7 +96,7 @@ GAUGED_EXPORT int gauged_array_sort(gauged_array_t *array) {
     if (array->length < 2) {
         return GAUGED_OK;
     }
-    //Convert to uint32_t and then sort with either radixsort or mergesort
+    // Convert to uint32_t and then sort with either radixsort or mergesort
     uint32_t *buffer = (uint32_t *)array->buffer;
     int result = GAUGED_OK;
     for (size_t i = 0; i < array->length; i++) {

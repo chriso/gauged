@@ -83,8 +83,8 @@ int gauged_map_append(gauged_map_t *, uint32_t, const gauged_array_t *);
 #define GAUGED_MAP_START 0
 #define GAUGED_MAP_END 0
 
-int gauged_map_concat(gauged_map_t *a, const gauged_map_t *b,
-    uint32_t start, uint32_t end, uint32_t offset);
+int gauged_map_concat(gauged_map_t *a, const gauged_map_t *b, uint32_t start,
+                      uint32_t end, uint32_t offset);
 
 /**
  * Get the first float in the map.
@@ -153,44 +153,57 @@ int gauged_map_percentile(gauged_map_t *, float percentile, float *result);
  * Provide a way to iterate over all positions/arrays in a map.
  */
 
-#define GAUGED_MAP_FOREACH(map, position, array) \
-    (void)position; \
-    (void)array; \
-    position = 0; \
-    size_t ZTMP(header, __LINE__) = 0; \
-    gauged_array_t ZTMP(s, __LINE__); \
-    array = &ZTMP(s, __LINE__); \
-    uint32_t *ZTMP(buffer, __LINE__) = map->buffer; \
-    uint32_t *ZTMP(end, __LINE__) = map->buffer + map->length; \
-    while (ZTMP(buffer, __LINE__) < ZTMP(end, __LINE__) \
-        ? (((*ZTMP(buffer, __LINE__) & 0x80000000) \
-            ? ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__) >> 22) & 0x1FF), \
-              (position = *ZTMP(buffer, __LINE__) & 0x3FFFFF), \
-              (ZTMP(header, __LINE__) = 1)) \
-            : ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__)) & 0x3FFFFFFF), \
-              (position = ZTMP(buffer, __LINE__)[1]), \
-              (ZTMP(header, __LINE__) = 2))), \
-          (ZTMP(s, __LINE__).buffer = (float *) ZTMP(buffer, __LINE__) + ZTMP(header, __LINE__)), \
-          (ZTMP(buffer, __LINE__) += ZTMP(header, __LINE__) + ZTMP(s, __LINE__).length), \
-          1) : 0)
+#define GAUGED_MAP_FOREACH(map, position, array)                               \
+    (void)position;                                                            \
+    (void)array;                                                               \
+    position = 0;                                                              \
+    size_t ZTMP(header, __LINE__) = 0;                                         \
+    gauged_array_t ZTMP(s, __LINE__);                                          \
+    array = &ZTMP(s, __LINE__);                                                \
+    uint32_t *ZTMP(buffer, __LINE__) = map->buffer;                            \
+    uint32_t *ZTMP(end, __LINE__) = map->buffer + map->length;                 \
+    while (                                                                    \
+        ZTMP(buffer, __LINE__) < ZTMP(end, __LINE__)                           \
+            ? (((*ZTMP(buffer, __LINE__) & 0x80000000)                         \
+                    ? ((ZTMP(s, __LINE__).length =                             \
+                            (*ZTMP(buffer, __LINE__) >> 22) & 0x1FF),          \
+                       (position = *ZTMP(buffer, __LINE__) & 0x3FFFFF),        \
+                       (ZTMP(header, __LINE__) = 1))                           \
+                    : ((ZTMP(s, __LINE__).length =                             \
+                            (*ZTMP(buffer, __LINE__)) & 0x3FFFFFFF),           \
+                       (position = ZTMP(buffer, __LINE__)[1]),                 \
+                       (ZTMP(header, __LINE__) = 2))),                         \
+               (ZTMP(s, __LINE__).buffer =                                     \
+                    (float *)ZTMP(buffer, __LINE__) + ZTMP(header, __LINE__)), \
+               (ZTMP(buffer, __LINE__) +=                                      \
+                ZTMP(header, __LINE__) + ZTMP(s, __LINE__).length),            \
+               1)                                                              \
+            : 0)
 
-#define GAUGED_MAP_FOREACH_ARRAY(map, array) \
-    (void)array; \
-    size_t ZTMP(header, __LINE__) = 0; \
-    gauged_array_t ZTMP(s, __LINE__); \
-    array = &ZTMP(s, __LINE__); \
-    uint32_t *ZTMP(buffer, __LINE__) = map->buffer; \
-    uint32_t *ZTMP(end, __LINE__) = map->buffer + map->length; \
-    while (ZTMP(buffer, __LINE__) < ZTMP(end, __LINE__) \
-        ? (((*ZTMP(buffer, __LINE__) & 0x80000000) \
-            ? ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__) >> 22) & 0x1FF), \
-              (ZTMP(header, __LINE__) = 1)) \
-            : ((ZTMP(s, __LINE__).length = (*ZTMP(buffer, __LINE__)) & 0x3FFFFFFF), \
-              (ZTMP(header, __LINE__) = 2))), \
-          (ZTMP(s, __LINE__).buffer = (float *) ZTMP(buffer, __LINE__) + ZTMP(header, __LINE__)), \
-          (ZTMP(buffer, __LINE__) += ZTMP(header, __LINE__) + ZTMP(s, __LINE__).length), \
-          1) : 0)
+#define GAUGED_MAP_FOREACH_ARRAY(map, array)                                   \
+    (void)array;                                                               \
+    size_t ZTMP(header, __LINE__) = 0;                                         \
+    gauged_array_t ZTMP(s, __LINE__);                                          \
+    array = &ZTMP(s, __LINE__);                                                \
+    uint32_t *ZTMP(buffer, __LINE__) = map->buffer;                            \
+    uint32_t *ZTMP(end, __LINE__) = map->buffer + map->length;                 \
+    while (                                                                    \
+        ZTMP(buffer, __LINE__) < ZTMP(end, __LINE__)                           \
+            ? (((*ZTMP(buffer, __LINE__) & 0x80000000)                         \
+                    ? ((ZTMP(s, __LINE__).length =                             \
+                            (*ZTMP(buffer, __LINE__) >> 22) & 0x1FF),          \
+                       (ZTMP(header, __LINE__) = 1))                           \
+                    : ((ZTMP(s, __LINE__).length =                             \
+                            (*ZTMP(buffer, __LINE__)) & 0x3FFFFFFF),           \
+                       (ZTMP(header, __LINE__) = 2))),                         \
+               (ZTMP(s, __LINE__).buffer =                                     \
+                    (float *)ZTMP(buffer, __LINE__) + ZTMP(header, __LINE__)), \
+               (ZTMP(buffer, __LINE__) +=                                      \
+                ZTMP(header, __LINE__) + ZTMP(s, __LINE__).length),            \
+               1)                                                              \
+            : 0)
 
-uint32_t *gauged_map_advance(uint32_t *, size_t *, uint32_t *, size_t *, float **);
+uint32_t *gauged_map_advance(uint32_t *, size_t *, uint32_t *, size_t *,
+                             float **);
 
 #endif

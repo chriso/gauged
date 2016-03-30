@@ -9,8 +9,8 @@
 
 #include <stdbool.h>
 
-#include "map.h"
 #include "hash.h"
+#include "map.h"
 
 /**
  * The writer is responsible for normalising gauges and their values.
@@ -76,15 +76,15 @@ void gauged_writer_free(gauged_writer_t *);
 
 #define GAUGED_KEY_OVERFLOW -1
 
-int gauged_writer_emit(gauged_writer_t *, uint32_t namespace_,
-    const char *key, float value);
+int gauged_writer_emit(gauged_writer_t *, uint32_t namespace_, const char *key,
+                       float value);
 
 /**
  * Emit multiple key/value pairs as a urlencoded string.
  */
 
 int gauged_writer_emit_pairs(gauged_writer_t *, uint32_t namespace_,
-    const char *pairs, uint32_t *data_points);
+                             const char *pairs, uint32_t *data_points);
 
 /**
  * Parse a query string into the writer buffer.

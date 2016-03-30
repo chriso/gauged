@@ -3,8 +3,8 @@
  * Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
  */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "test.h"
@@ -49,8 +49,9 @@ int main() {
 
     GAUGED_SUITE("Map creation");
 
-    GAUGED_BENCH_START("Creating a map of " ARRAY_COUNT_HUMAN " arrays each with "
-        ARRAY_SIZE_HUMAN " floats (" ARRAY_FLOATS_TOTAL " total)");
+    GAUGED_BENCH_START("Creating a map of " ARRAY_COUNT_HUMAN
+                       " arrays each with " ARRAY_SIZE_HUMAN
+                       " floats (" ARRAY_FLOATS_TOTAL " total)");
     map = gauged_map_random(ARRAY_COUNT, ARRAY_SIZE);
     assert(map);
     GAUGED_BENCH_END(map->length);

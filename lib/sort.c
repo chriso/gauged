@@ -9,28 +9,30 @@
 #include "common.h"
 #include "sort.h"
 
-static inline void gauged_sort_insertion(uint32_t *array, uint32_t offset, size_t end) {
+static inline void gauged_sort_insertion(uint32_t *array, uint32_t offset,
+                                         size_t end) {
     uint32_t x, y, temp;
     for (x = offset; x < end; ++x) {
-        for (y = x; y > offset && array[y-1] > array[y]; y--) {
+        for (y = x; y > offset && array[y - 1] > array[y]; y--) {
             temp = array[y];
-            array[y] = array[y-1];
-            array[y-1] = temp;
+            array[y] = array[y - 1];
+            array[y - 1] = temp;
         }
     }
 }
 
-static void gauged_sort_radix(uint32_t *array, uint32_t offset, size_t end, uint32_t shift) {
+static void gauged_sort_radix(uint32_t *array, uint32_t offset, size_t end,
+                              uint32_t shift) {
     uint32_t x, y, value, temp;
-    uint32_t last[256] = { 0 }, pointer[256];
+    uint32_t last[256] = {0}, pointer[256];
     for (x = offset; x < end; ++x) {
         ++last[(array[x] >> shift) & 0xFF];
     }
     last[0] += offset;
     pointer[0] = offset;
     for (x = 1; x < 256; ++x) {
-        pointer[x] = last[x-1];
-        last[x] += last[x-1];
+        pointer[x] = last[x - 1];
+        last[x] += last[x - 1];
     }
     for (x = 0; x < 256; ++x) {
         while (pointer[x] != last[x]) {
@@ -48,7 +50,7 @@ static void gauged_sort_radix(uint32_t *array, uint32_t offset, size_t end, uint
     if (shift > 0) {
         shift -= 8;
         for (x = 0; x < 256; ++x) {
-            temp = x > 0 ? pointer[x] - pointer[x-1] : pointer[0] - offset;
+            temp = x > 0 ? pointer[x] - pointer[x - 1] : pointer[0] - offset;
             if (temp > 64) {
                 gauged_sort_radix(array, pointer[x] - temp, pointer[x], shift);
             } else if (temp > 1) {

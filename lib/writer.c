@@ -3,14 +3,15 @@
  * Copyright 2014 (c) Chris O'Hara <cohara87@gmail.com>
  */
 
+#include <ctype.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include <ctype.h>
 
 #include "writer.h"
 
-static inline void gauged_writer_hash_node_free(gauged_writer_hash_node_t *node) {
+static inline void gauged_writer_hash_node_free(
+    gauged_writer_hash_node_t *node) {
     gauged_map_free(node->map);
     gauged_array_free(node->array);
     free(node->key);
@@ -47,8 +48,9 @@ static inline void gauged_writer_hash_free(gauged_writer_hash_t *hash) {
 
 static int gauged_writer_hash_rehash(gauged_writer_hash_t *);
 
-static inline gauged_writer_hash_node_t *gauged_writer_hash_get(gauged_writer_hash_t *hash,
-        uint32_t namespace_, const char *key, uint32_t seed) {
+static inline gauged_writer_hash_node_t *gauged_writer_hash_get(
+    gauged_writer_hash_t *hash, uint32_t namespace_, const char *key,
+    uint32_t seed) {
     size_t mask = hash->size - 1;
     size_t hash_key = seed & mask;
     gauged_writer_hash_node_t *node;
@@ -58,7 +60,7 @@ static inline gauged_writer_hash_node_t *gauged_writer_hash_get(gauged_writer_ha
         }
         node = hash->nodes[hash_key];
         if (node->seed == seed && node->namespace_ == namespace_ &&
-                !strcmp(key, node->key)) {
+            !strcmp(key, node->key)) {
             return node;
         }
         hash_key = (seed + j * j) & mask;
@@ -66,7 +68,8 @@ static inline gauged_writer_hash_node_t *gauged_writer_hash_get(gauged_writer_ha
     return NULL;
 }
 
-static inline int gauged_writer_hash_insert(gauged_writer_hash_t *hash, gauged_writer_hash_node_t *node) {
+static inline int gauged_writer_hash_insert(gauged_writer_hash_t *hash,
+                                            gauged_writer_hash_node_t *node) {
     if (hash->count > hash->size / 2) {
         gauged_writer_hash_rehash(hash);
     }
@@ -95,7 +98,8 @@ static inline int gauged_writer_hash_insert(gauged_writer_hash_t *hash, gauged_w
 static inline int gauged_writer_hash_rehash(gauged_writer_hash_t *hash) {
     size_t current_size = hash->size;
     size_t current_count = hash->count;
-    gauged_writer_hash_node_t *current_head = hash->head, *current_tail = hash->tail;
+    gauged_writer_hash_node_t *current_head = hash->head,
+                              *current_tail = hash->tail;
     gauged_writer_hash_node_t *node, **current_nodes = hash->nodes;
     hash->size *= 2;
     hash->count = 0;
@@ -155,8 +159,10 @@ GAUGED_EXPORT void gauged_writer_free(gauged_writer_t *writer) {
     free(writer);
 }
 
-GAUGED_EXPORT int gauged_writer_emit_pairs(gauged_writer_t *writer, uint32_t namespace_,
-        const char *pairs, uint32_t *data_points) {
+GAUGED_EXPORT int gauged_writer_emit_pairs(gauged_writer_t *writer,
+                                           uint32_t namespace_,
+                                           const char *pairs,
+                                           uint32_t *data_points) {
     gauged_writer_parse_query(writer, pairs);
     char *key, *value, *end_ptr;
     float float_value;
@@ -164,54 +170,58 @@ GAUGED_EXPORT int gauged_writer_emit_pairs(gauged_writer_t *writer, uint32_t nam
     if (!writer->buffer_size) {
         return GAUGED_OK;
     }
-    for (size_t i = 0; i <= writer->buffer_size - 2; ) {
+    for (size_t i = 0; i <= writer->buffer_size - 2;) {
         key = writer->buffer[i++];
         value = writer->buffer[i++];
         float_value = strtof(value, &end_ptr);
-        if (value == end_ptr) { // NaN?
+        if (value == end_ptr) {  // NaN?
             continue;
         }
         status = gauged_writer_emit(writer, namespace_, key, float_value);
         switch (status) {
-        case GAUGED_OK:
-            *data_points += 1;
-            break;
-        case GAUGED_KEY_OVERFLOW:
-            break;
-        case GAUGED_ERROR:
-            return GAUGED_ERROR;
+            case GAUGED_OK:
+                *data_points += 1;
+                break;
+            case GAUGED_KEY_OVERFLOW:
+                break;
+            case GAUGED_ERROR:
+                return GAUGED_ERROR;
         }
     }
     return GAUGED_OK;
 }
 
-GAUGED_EXPORT int gauged_writer_emit(gauged_writer_t *writer, uint32_t namespace_, const char *key, float value) {
+GAUGED_EXPORT int gauged_writer_emit(gauged_writer_t *writer,
+                                     uint32_t namespace_, const char *key,
+                                     float value) {
     size_t key_len = strlen(key) + 1;
     if (writer->max_key && key_len > writer->max_key) {
         return GAUGED_KEY_OVERFLOW;
     }
     gauged_hash_init(&writer->hash);
-    gauged_hash_update(&writer->hash, (char*)&namespace_, sizeof(uint32_t));
+    gauged_hash_update(&writer->hash, (char *)&namespace_, sizeof(uint32_t));
     gauged_hash_update(&writer->hash, key, key_len);
     uint32_t seed = gauged_hash_digest(&writer->hash);
-    //See if the hash node already exists
-    gauged_writer_hash_node_t *lookup = gauged_writer_hash_get(writer->pending,
-        namespace_, key, seed);
+    // See if the hash node already exists
+    gauged_writer_hash_node_t *lookup =
+        gauged_writer_hash_get(writer->pending, namespace_, key, seed);
     if (lookup) {
         if (!gauged_array_append(lookup->array, value)) {
             return GAUGED_ERROR;
         }
-        if (writer->pending->array_tail != lookup && lookup->array_next == NULL) {
+        if (writer->pending->array_tail != lookup &&
+            lookup->array_next == NULL) {
             if (writer->pending->array_tail) {
                 writer->pending->array_tail->array_next = lookup;
                 writer->pending->array_tail = lookup;
             } else {
-                writer->pending->array_head = writer->pending->array_tail = lookup;
+                writer->pending->array_head = writer->pending->array_tail =
+                    lookup;
             }
         }
         return GAUGED_OK;
     }
-    //Not found, create a new hash node
+    // Not found, create a new hash node
     gauged_writer_hash_node_t *node = malloc(sizeof(gauged_writer_hash_node_t));
     if (!node) {
         return GAUGED_ERROR;
@@ -247,7 +257,8 @@ error:
     return GAUGED_ERROR;
 }
 
-GAUGED_EXPORT int gauged_writer_flush_arrays(gauged_writer_t *writer, uint32_t offset) {
+GAUGED_EXPORT int gauged_writer_flush_arrays(gauged_writer_t *writer,
+                                             uint32_t offset) {
     gauged_writer_hash_node_t *node, *next;
     gauged_writer_hash_t *hash = writer->pending;
     for (node = hash->array_head; node; node = node->array_next) {
@@ -301,7 +312,8 @@ static void gauged_writer_url_decode(char *dst, const char *src, size_t len) {
         if (*dst == '+') {
             *dst = ' ';
         } else if (*dst == '%' && src[0] && src[1] && len >= 2) {
-            *dst = (gauged_writer_hex_decode(src[0]) << 4) | gauged_writer_hex_decode(src[1]);
+            *dst = (gauged_writer_hex_decode(src[0]) << 4) |
+                   gauged_writer_hex_decode(src[1]);
             src += 2;
             len -= 2;
         }
@@ -310,7 +322,8 @@ static void gauged_writer_url_decode(char *dst, const char *src, size_t len) {
     *dst = '\0';
 }
 
-GAUGED_EXPORT void gauged_writer_parse_query(gauged_writer_t *writer, const char *query) {
+GAUGED_EXPORT void gauged_writer_parse_query(gauged_writer_t *writer,
+                                             const char *query) {
     writer->buffer_size = 0;
     if (!query) {
         return;
@@ -333,18 +346,19 @@ GAUGED_EXPORT void gauged_writer_parse_query(gauged_writer_t *writer, const char
         c = *str++;
         if (c == '&' || c == '\0') {
             if (key_width) {
-                 key_start[key_width] = '\0';
-                 gauged_writer_url_decode(key_start, key_start, key_width);
-                 if (value_start) {
-                     value_start[value_width] = '\0';
-                     gauged_writer_url_decode(value_start, value_start, value_width);
-                     writer->buffer[pos++] = key_start;
-                     writer->buffer[pos++] = value_start;
-                     writer->buffer_size += 2;
-                     if (writer->buffer_size == GAUGED_WRITER_MAX_PAIRS * 2) {
-                         break;
-                     }
-                 }
+                key_start[key_width] = '\0';
+                gauged_writer_url_decode(key_start, key_start, key_width);
+                if (value_start) {
+                    value_start[value_width] = '\0';
+                    gauged_writer_url_decode(value_start, value_start,
+                                             value_width);
+                    writer->buffer[pos++] = key_start;
+                    writer->buffer[pos++] = value_start;
+                    writer->buffer_size += 2;
+                    if (writer->buffer_size == GAUGED_WRITER_MAX_PAIRS * 2) {
+                        break;
+                    }
+                }
             }
             if (c == '\0') {
                 break;
@@ -366,5 +380,4 @@ GAUGED_EXPORT void gauged_writer_parse_query(gauged_writer_t *writer, const char
     }
 }
 
-GAUGED_EXPORT void init_gauged() {
-}
+GAUGED_EXPORT void init_gauged() {}
