@@ -99,6 +99,7 @@ int main() {
         key[0] = c;
         gauged_writer_emit(writer, 0, key, 10);
     }
+    gauged_writer_flush_arrays(writer, 10);
 
     expected_maps = 0;
     float writer_sum = 0;
@@ -211,7 +212,7 @@ int main() {
 
     GAUGED_EXPECT_FLOAT_EQUALS("Map first", gauged_map_first(map), 0);
     GAUGED_EXPECT_FLOAT_EQUALS("Map last", gauged_map_last(map), 14.5);
-    GAUGED_EXPECT_FLOAT_EQUALS("Map sum", gauged_map_min(map), 42);
+    GAUGED_EXPECT_FLOAT_EQUALS("Map sum", gauged_map_sum(map), 42);
     GAUGED_EXPECT_FLOAT_EQUALS("Map min", gauged_map_min(map), -8);
     GAUGED_EXPECT_FLOAT_EQUALS("Map max", gauged_map_max(map), 20);
     GAUGED_EXPECT_FLOAT_EQUALS("Map mean", gauged_map_mean(map), 7);

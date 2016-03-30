@@ -22,7 +22,7 @@
 #define GAUGED_FLOAT_DIFF 0.00001f
 
 #define GAUGED_EXPECT_FLOAT_EQUALS(msg, value, expected) \
-    CTEST_EXPECT(msg, fabs((float)value - (float)expected < GAUGED_FLOAT_DIFF))
+    CTEST_EXPECT(msg, fabs((float)value - (float)expected) < GAUGED_FLOAT_DIFF)
 
 #define GAUGED_EXPECT_EQUALS(msg, array, ...) \
     do { \
