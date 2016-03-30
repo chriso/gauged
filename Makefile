@@ -13,10 +13,7 @@ clean: cclean
 		 dist build gauged.egg-info .coverage htmlcov MANIFEST \
 
 coverage: build
-	@command -v coverage >/dev/null || \
-		(echo "The coverage.py tool is required (pip install coverage)" && exit 1)
-	@coverage run test.py && \
-		coverage report -m
+	@coverage run test.py && coverage report -m
 
 coverage-html: coverage
 	@coverage html && open htmlcov/index.html
@@ -53,14 +50,8 @@ cbenchmark: cclean
 			&& test/benchmark
 
 lint:
-	@command -v flake8 >/dev/null || \
-		(echo "The flake8 tool is required (pip install flake8)" && exit 1)
 	@flake8 *.py gauged test --exclude=__init__.py
-	@command -v pylint >/dev/null || \
-		(echo "The pylint tool is required (pip install pylint)" && exit 1)
-	@pylint --rcfile=.pylintrc \
-			--output-format=colorized \
-			--reports=n gauged
+	@pylint --rcfile=.pylintrc --output-format=colorized --reports=n gauged
 
 publish:
 	@python setup.py sdist upload

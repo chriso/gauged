@@ -13,3 +13,4 @@ htmlcov
 *.gcda
 *.gcov
 MANIFEST
+env

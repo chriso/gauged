@@ -71,7 +71,19 @@ See the [documentation][documentation] or [technical overview][technical-overvie
 
 ## Tests
 
-You can run the test suite using an in-memory driver with `make check-quick`.
+Setup the test environment:
+
+```bash
+$ virtualenv env
+$ source ./env/bin/activate
+$ pip install -r test-requirements.txt
+```
+
+You can then run the test suite using an in-memory driver:
+
+```bash
+$ make check-quick
+```
 
 To run the full suite, first edit the configuration in `test_drivers.cfg` so that PostgreSQL and MySQL both point to existing (and empty) databases, then run:
 
