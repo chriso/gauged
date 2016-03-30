@@ -21,8 +21,6 @@ typedef struct gauged_mergesort_s {
 } gauged_mergesort_t;
 
 #define GAUGED_SORT_INSERTIONSORT_MAX 64
-#define GAUGED_SORT_RADIXSORT_MAX (1024 * 1024 / sizeof(uint32_t))
-#define GAUGED_SORT_MERGESORT_MAX_DEPTH 3
 
 /**
  * Sort an array.
