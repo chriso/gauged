@@ -1,3 +1,8 @@
+---[ 1.0.1 ]
+
+* Fixed a bug when sorting large arrays
+* PEP8 style fixes
+
 ---[ 1.0.0 ]
 
 * Started following semver
